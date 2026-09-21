@@ -1,0 +1,482 @@
+[
+  {
+    "joint": "fl_1",
+    "parent": "body",
+    "child": "fl_shoulder",
+    "origin_parent_mm": [
+      54.0,
+      24.0,
+      0.0
+    ],
+    "axis_parent": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "nominal_radians": 0,
+    "limits_radians": [
+      -0.10471975511965978,
+      0.3141592653589793
+    ],
+    "zero_origin_world_mm": [
+      54.0,
+      24.0,
+      0.0
+    ],
+    "zero_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      54.0,
+      24.0,
+      118.58378611949402
+    ],
+    "standing_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "fl_2",
+    "parent": "fl_shoulder",
+    "child": "fl_thigh",
+    "origin_parent_mm": [
+      0.0,
+      16.0,
+      -37.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": -0.3384389133413923,
+    "limits_radians": [
+      -0.8377580409572782,
+      0.3490658503988659
+    ],
+    "zero_origin_world_mm": [
+      54.0,
+      40.0,
+      -37.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      54.0,
+      40.0,
+      81.58378611949402
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "fl_3",
+    "parent": "fl_thigh",
+    "child": "fl_shank",
+    "origin_parent_mm": [
+      0.0,
+      0.0,
+      -44.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": 0.7330382858376184,
+    "limits_radians": [
+      0.08726646259971647,
+      1.4835298641951802
+    ],
+    "zero_origin_world_mm": [
+      54.0,
+      40.0,
+      -81.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      68.60865844483536,
+      40.0,
+      40.079724891198055
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "fr_1",
+    "parent": "body",
+    "child": "fr_shoulder",
+    "origin_parent_mm": [
+      54.0,
+      -24.0,
+      0.0
+    ],
+    "axis_parent": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "nominal_radians": 0,
+    "limits_radians": [
+      -0.3141592653589793,
+      0.10471975511965978
+    ],
+    "zero_origin_world_mm": [
+      54.0,
+      -24.0,
+      0.0
+    ],
+    "zero_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      54.0,
+      -24.0,
+      118.58378611949402
+    ],
+    "standing_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "fr_2",
+    "parent": "fr_shoulder",
+    "child": "fr_thigh",
+    "origin_parent_mm": [
+      0.0,
+      -16.0,
+      -37.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": -0.3384389133413923,
+    "limits_radians": [
+      -0.8377580409572782,
+      0.3490658503988659
+    ],
+    "zero_origin_world_mm": [
+      54.0,
+      -40.0,
+      -37.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      54.0,
+      -40.0,
+      81.58378611949402
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "fr_3",
+    "parent": "fr_thigh",
+    "child": "fr_shank",
+    "origin_parent_mm": [
+      0.0,
+      0.0,
+      -44.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": 0.7330382858376184,
+    "limits_radians": [
+      0.08726646259971647,
+      1.4835298641951802
+    ],
+    "zero_origin_world_mm": [
+      54.0,
+      -40.0,
+      -81.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      68.60865844483536,
+      -40.0,
+      40.079724891198055
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "bl_1",
+    "parent": "body",
+    "child": "bl_shoulder",
+    "origin_parent_mm": [
+      -54.0,
+      24.0,
+      0.0
+    ],
+    "axis_parent": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "nominal_radians": 0,
+    "limits_radians": [
+      -0.10471975511965978,
+      0.3141592653589793
+    ],
+    "zero_origin_world_mm": [
+      -54.0,
+      24.0,
+      0.0
+    ],
+    "zero_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      -54.0,
+      24.0,
+      118.58378611949402
+    ],
+    "standing_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "bl_2",
+    "parent": "bl_shoulder",
+    "child": "bl_thigh",
+    "origin_parent_mm": [
+      0.0,
+      16.0,
+      -37.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": -0.3384389133413923,
+    "limits_radians": [
+      -0.8377580409572782,
+      0.3490658503988659
+    ],
+    "zero_origin_world_mm": [
+      -54.0,
+      40.0,
+      -37.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      -54.0,
+      40.0,
+      81.58378611949402
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "bl_3",
+    "parent": "bl_thigh",
+    "child": "bl_shank",
+    "origin_parent_mm": [
+      0.0,
+      0.0,
+      -44.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": 0.7330382858376184,
+    "limits_radians": [
+      0.08726646259971647,
+      1.4835298641951802
+    ],
+    "zero_origin_world_mm": [
+      -54.0,
+      40.0,
+      -81.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      -39.39134155516465,
+      40.0,
+      40.079724891198055
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "br_1",
+    "parent": "body",
+    "child": "br_shoulder",
+    "origin_parent_mm": [
+      -54.0,
+      -24.0,
+      0.0
+    ],
+    "axis_parent": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "nominal_radians": 0,
+    "limits_radians": [
+      -0.3141592653589793,
+      0.10471975511965978
+    ],
+    "zero_origin_world_mm": [
+      -54.0,
+      -24.0,
+      0.0
+    ],
+    "zero_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      -54.0,
+      -24.0,
+      118.58378611949402
+    ],
+    "standing_axis_world": [
+      1.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "br_2",
+    "parent": "br_shoulder",
+    "child": "br_thigh",
+    "origin_parent_mm": [
+      0.0,
+      -16.0,
+      -37.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": -0.3384389133413923,
+    "limits_radians": [
+      -0.8377580409572782,
+      0.3490658503988659
+    ],
+    "zero_origin_world_mm": [
+      -54.0,
+      -40.0,
+      -37.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      -54.0,
+      -40.0,
+      81.58378611949402
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "joint": "br_3",
+    "parent": "br_thigh",
+    "child": "br_shank",
+    "origin_parent_mm": [
+      0.0,
+      0.0,
+      -44.0
+    ],
+    "axis_parent": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "nominal_radians": 0.7330382858376184,
+    "limits_radians": [
+      0.08726646259971647,
+      1.4835298641951802
+    ],
+    "zero_origin_world_mm": [
+      -54.0,
+      -40.0,
+      -81.0
+    ],
+    "zero_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "standing_origin_world_mm": [
+      -39.39134155516465,
+      -40.0,
+      40.079724891198055
+    ],
+    "standing_axis_world": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  }
+]

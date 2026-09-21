@@ -1,0 +1,72 @@
+{
+  "method": "Exact OpenCascade BREP common volume, 0.05 mm^3 threshold; includes adjacent links. Allowance volumes and slip-on pad excluded.",
+  "tested_poses": 16,
+  "results": [
+    {
+      "pose": "standing",
+      "clashes": []
+    },
+    {
+      "pose": "zero_datum",
+      "clashes": []
+    },
+    {
+      "pose": "roll_both_inward",
+      "clashes": []
+    },
+    {
+      "pose": "roll_both_outward",
+      "clashes": []
+    },
+    {
+      "pose": "fl_1_inward_only",
+      "clashes": []
+    },
+    {
+      "pose": "fr_1_inward_only",
+      "clashes": []
+    },
+    {
+      "pose": "bl_1_inward_only",
+      "clashes": []
+    },
+    {
+      "pose": "br_1_inward_only",
+      "clashes": []
+    },
+    {
+      "pose": "joint_1_limit_0",
+      "clashes": []
+    },
+    {
+      "pose": "joint_1_limit_1",
+      "clashes": []
+    },
+    {
+      "pose": "joint_2_limit_0",
+      "clashes": []
+    },
+    {
+      "pose": "joint_2_limit_1",
+      "clashes": []
+    },
+    {
+      "pose": "joint_3_limit_0",
+      "clashes": []
+    },
+    {
+      "pose": "joint_3_limit_1",
+      "clashes": []
+    },
+    {
+      "pose": "hip_-35_knee_60",
+      "clashes": []
+    },
+    {
+      "pose": "hip_-12_knee_25",
+      "clashes": []
+    }
+  ],
+  "passes": true,
+  "limitation": "Finite pose set, not swept-volume certification; cable/hardware routing and external fastener heads unmodeled."
+}

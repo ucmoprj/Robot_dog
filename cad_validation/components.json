@@ -1,0 +1,296 @@
+[
+  {
+    "name": "fl_roll_MG90S",
+    "link": "body",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "fr_roll_MG90S",
+    "link": "body",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "bl_roll_MG90S",
+    "link": "body",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "br_roll_MG90S",
+    "link": "body",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "body_base",
+    "link": "body",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "electronics_deck",
+    "link": "body",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "imu_bridge",
+    "link": "body",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "battery_envelope",
+    "link": "body",
+    "kind": "battery",
+    "printable": false
+  },
+  {
+    "name": "PCA9685_envelope",
+    "link": "body",
+    "kind": "board",
+    "printable": false
+  },
+  {
+    "name": "controller_envelope",
+    "link": "body",
+    "kind": "board",
+    "printable": false
+  },
+  {
+    "name": "IMU_envelope",
+    "link": "body",
+    "kind": "board",
+    "printable": false
+  },
+  {
+    "name": "wiring_regulator_allowance",
+    "link": "body",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fastener_mass_allowance",
+    "link": "body",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fl_shoulder_bracket",
+    "link": "fl_shoulder",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "fl_roll_horn",
+    "link": "fl_shoulder",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fl_hip_MG90S",
+    "link": "fl_shoulder",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "fl_thigh_bracket",
+    "link": "fl_thigh",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "fl_hip_horn",
+    "link": "fl_thigh",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fl_knee_MG90S",
+    "link": "fl_thigh",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "fl_lower_leg",
+    "link": "fl_shank",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "fl_knee_horn",
+    "link": "fl_shank",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fl_foot_pad",
+    "link": "fl_shank",
+    "kind": "foot",
+    "printable": false
+  },
+  {
+    "name": "fr_shoulder_bracket",
+    "link": "fr_shoulder",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "fr_roll_horn",
+    "link": "fr_shoulder",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fr_hip_MG90S",
+    "link": "fr_shoulder",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "fr_thigh_bracket",
+    "link": "fr_thigh",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "fr_hip_horn",
+    "link": "fr_thigh",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fr_knee_MG90S",
+    "link": "fr_thigh",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "fr_lower_leg",
+    "link": "fr_shank",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "fr_knee_horn",
+    "link": "fr_shank",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "fr_foot_pad",
+    "link": "fr_shank",
+    "kind": "foot",
+    "printable": false
+  },
+  {
+    "name": "bl_shoulder_bracket",
+    "link": "bl_shoulder",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "bl_roll_horn",
+    "link": "bl_shoulder",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "bl_hip_MG90S",
+    "link": "bl_shoulder",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "bl_thigh_bracket",
+    "link": "bl_thigh",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "bl_hip_horn",
+    "link": "bl_thigh",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "bl_knee_MG90S",
+    "link": "bl_thigh",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "bl_lower_leg",
+    "link": "bl_shank",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "bl_knee_horn",
+    "link": "bl_shank",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "bl_foot_pad",
+    "link": "bl_shank",
+    "kind": "foot",
+    "printable": false
+  },
+  {
+    "name": "br_shoulder_bracket",
+    "link": "br_shoulder",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "br_roll_horn",
+    "link": "br_shoulder",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "br_hip_MG90S",
+    "link": "br_shoulder",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "br_thigh_bracket",
+    "link": "br_thigh",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "br_hip_horn",
+    "link": "br_thigh",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "br_knee_MG90S",
+    "link": "br_thigh",
+    "kind": "servo",
+    "printable": false
+  },
+  {
+    "name": "br_lower_leg",
+    "link": "br_shank",
+    "kind": "print",
+    "printable": true
+  },
+  {
+    "name": "br_knee_horn",
+    "link": "br_shank",
+    "kind": "horn",
+    "printable": false
+  },
+  {
+    "name": "br_foot_pad",
+    "link": "br_shank",
+    "kind": "foot",
+    "printable": false
+  }
+]

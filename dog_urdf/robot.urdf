@@ -1,0 +1,792 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="mg90s_dog">
+  <link name="body">
+    <inertial>
+      <origin xyz="-1.746911734e-18 -0.0001740695674 -0.002806351854" rpy="0 0 0" />
+      <mass value="0.16085522828" />
+      <inertia ixx="7.964786281300772e-05" iyy="0.00015646962062766177" izz="0.0001857229865212858" ixy="-2.759287810296297e-22" ixz="-1.3891575805159996e-21" iyz="3.8657785191134943e-07" />
+    </inertial>
+    <visual name="fl_roll_MG90S">
+      <geometry>
+        <mesh filename="assets/fl_roll_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <visual name="fr_roll_MG90S">
+      <geometry>
+        <mesh filename="assets/fr_roll_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <visual name="bl_roll_MG90S">
+      <geometry>
+        <mesh filename="assets/bl_roll_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <visual name="br_roll_MG90S">
+      <geometry>
+        <mesh filename="assets/br_roll_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <visual name="body_base">
+      <geometry>
+        <mesh filename="assets/body_base.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="electronics_deck">
+      <geometry>
+        <mesh filename="assets/electronics_deck.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="imu_bridge">
+      <geometry>
+        <mesh filename="assets/imu_bridge.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="battery_envelope">
+      <geometry>
+        <mesh filename="assets/battery_envelope.stl" />
+      </geometry>
+      <material name="battery">
+        <color rgba="0.91 0.6 0.2 1" />
+      </material>
+    </visual>
+    <visual name="PCA9685_envelope">
+      <geometry>
+        <mesh filename="assets/PCA9685_envelope.stl" />
+      </geometry>
+      <material name="board">
+        <color rgba="0.12 0.55 0.39 1" />
+      </material>
+    </visual>
+    <visual name="controller_envelope">
+      <geometry>
+        <mesh filename="assets/controller_envelope.stl" />
+      </geometry>
+      <material name="board">
+        <color rgba="0.12 0.55 0.39 1" />
+      </material>
+    </visual>
+    <visual name="IMU_envelope">
+      <geometry>
+        <mesh filename="assets/IMU_envelope.stl" />
+      </geometry>
+      <material name="board">
+        <color rgba="0.12 0.55 0.39 1" />
+      </material>
+    </visual>
+    <visual name="wiring_regulator_allowance">
+      <geometry>
+        <mesh filename="assets/wiring_regulator_allowance.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fastener_mass_allowance">
+      <geometry>
+        <mesh filename="assets/fastener_mass_allowance.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <collision name="body_collision_0">
+      <origin xyz="0.03675 0.024 -0.0056" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0225 0.0122 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_1">
+      <origin xyz="0.03675 -0.024 -0.0056" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0225 0.0122 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_2">
+      <origin xyz="-0.03675 0.024 -0.0056" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0225 0.0122 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_3">
+      <origin xyz="-0.03675 -0.024 -0.0056" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0225 0.0122 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_4">
+      <origin xyz="0 0 -0.01" rpy="0 0 0" />
+      <geometry>
+        <box size="0.045 0.024 0.012" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_5">
+      <origin xyz="0 -0.014 0.016" rpy="0 0 0" />
+      <geometry>
+        <box size="0.062 0.025 0.005" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_6">
+      <origin xyz="0 0.014 0.017" rpy="0 0 0" />
+      <geometry>
+        <box size="0.05 0.025 0.007" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_7">
+      <origin xyz="0 0 0.026" rpy="0 0 0" />
+      <geometry>
+        <box size="0.02 0.016 0.003" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_8">
+      <origin xyz="0 0 -0.02" rpy="0 0 0" />
+      <geometry>
+        <box size="0.116 0.066 0.002" />
+      </geometry>
+    </collision>
+    <collision name="body_collision_9">
+      <origin xyz="0 0 0.012" rpy="0 0 0" />
+      <geometry>
+        <box size="0.116 0.066 0.002" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="fl_shoulder">
+    <inertial>
+      <origin xyz="0.001084470576 0.0005996856796 -0.03741114424" rpy="0 0 0" />
+      <mass value="0.0171559814234" />
+      <inertia ixx="4.3076591210602585e-06" iyy="3.9094379506812364e-06" izz="1.1775298861389182e-06" ixy="-1.827410375070783e-08" ixz="-4.1990432892324164e-07" iyz="-9.204574400149697e-08" />
+    </inertial>
+    <visual name="fl_shoulder_bracket">
+      <geometry>
+        <mesh filename="assets/fl_shoulder_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="fl_roll_horn">
+      <geometry>
+        <mesh filename="assets/fl_roll_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fl_hip_MG90S">
+      <geometry>
+        <mesh filename="assets/fl_hip_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="fl_shoulder_collision_0">
+      <origin xyz="0 -0.00125 -0.0426" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="fl_shoulder_collision_1">
+      <origin xyz="0.011 0.002 -0.0185" rpy="0 0 0" />
+      <geometry>
+        <box size="0.003 0.012 0.037" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fl_1" type="revolute">
+    <parent link="body" />
+    <child link="fl_shoulder" />
+    <origin xyz="0.054 0.024 0" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.10471975511965978" upper="0.3141592653589793" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="fl_thigh">
+    <inertial>
+      <origin xyz="0.0008068119681 -0.01315870807 -0.04503467837" rpy="0 0 0" />
+      <mass value="0.0174277595713" />
+      <inertia ixx="4.878721751529063e-06" iyy="3.965305639740162e-06" izz="1.6983350128052944e-06" ixy="-1.0922448220481957e-07" ixz="-4.011469989727535e-08" iyz="-1.1539926546439345e-06" />
+    </inertial>
+    <visual name="fl_thigh_bracket">
+      <geometry>
+        <mesh filename="assets/fl_thigh_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="fl_hip_horn">
+      <geometry>
+        <mesh filename="assets/fl_hip_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fl_knee_MG90S">
+      <geometry>
+        <mesh filename="assets/fl_knee_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="fl_thigh_collision_0">
+      <origin xyz="0 0.00305 -0.017" rpy="0 0 0" />
+      <geometry>
+        <box size="0.01 0.0025 0.03" />
+      </geometry>
+    </collision>
+    <collision name="fl_thigh_collision_1">
+      <origin xyz="0 -0.01725 -0.0496" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fl_2" type="revolute">
+    <parent link="fl_shoulder" />
+    <child link="fl_thigh" />
+    <origin xyz="0 0.016 -0.037" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.8377580409572782" upper="0.3490658503988659" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="fl_shank">
+    <inertial>
+      <origin xyz="2.949931231e-13 0.002922681153 -0.01868466929" rpy="0 0 0" />
+      <mass value="0.00248693251831" />
+      <inertia ixx="7.196081842990857e-07" iyy="7.382120084285389e-07" izz="3.714277955244481e-08" ixy="9.927656635819591e-20" ixz="1.1463319276949017e-17" iyz="1.7427820703383923e-08" />
+    </inertial>
+    <visual name="fl_lower_leg">
+      <geometry>
+        <mesh filename="assets/fl_lower_leg.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="fl_knee_horn">
+      <geometry>
+        <mesh filename="assets/fl_knee_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fl_foot_pad">
+      <geometry>
+        <mesh filename="assets/fl_foot_pad.stl" />
+      </geometry>
+      <material name="foot">
+        <color rgba="0.15 0.18 0.2 1" />
+      </material>
+    </visual>
+    <collision name="fl_shank_collision_0">
+      <origin xyz="0 0.00305 -0.019" rpy="0 0 0" />
+      <geometry>
+        <box size="0.009 0.0025 0.026" />
+      </geometry>
+    </collision>
+    <collision name="fl_shank_collision_1">
+      <origin xyz="0 0.00305 -0.038" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.005" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fl_3" type="revolute">
+    <parent link="fl_thigh" />
+    <child link="fl_shank" />
+    <origin xyz="0 0 -0.044" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="0.08726646259971647" upper="1.4835298641951802" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="fr_shoulder">
+    <inertial>
+      <origin xyz="0.001084470576 -0.0005996856796 -0.03741114424" rpy="0 0 0" />
+      <mass value="0.0171559814234" />
+      <inertia ixx="4.3076591210602585e-06" iyy="3.9094379506812364e-06" izz="1.1775298861389188e-06" ixy="1.8274103750707644e-08" ixz="-4.1990432892324164e-07" iyz="9.204574400149774e-08" />
+    </inertial>
+    <visual name="fr_shoulder_bracket">
+      <geometry>
+        <mesh filename="assets/fr_shoulder_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="fr_roll_horn">
+      <geometry>
+        <mesh filename="assets/fr_roll_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fr_hip_MG90S">
+      <geometry>
+        <mesh filename="assets/fr_hip_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="fr_shoulder_collision_0">
+      <origin xyz="0 0.00125 -0.0426" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="fr_shoulder_collision_1">
+      <origin xyz="0.011 -0.002 -0.0185" rpy="0 0 0" />
+      <geometry>
+        <box size="0.003 0.012 0.037" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fr_1" type="revolute">
+    <parent link="body" />
+    <child link="fr_shoulder" />
+    <origin xyz="0.054 -0.024 0" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.3141592653589793" upper="0.10471975511965978" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="fr_thigh">
+    <inertial>
+      <origin xyz="0.0008068119681 0.01315870807 -0.04503467837" rpy="0 0 0" />
+      <mass value="0.0174277595713" />
+      <inertia ixx="4.878721751529063e-06" iyy="3.9653056397401626e-06" izz="1.6983350128052944e-06" ixy="1.0922448220481957e-07" ixz="-4.011469989727535e-08" iyz="1.153992654643935e-06" />
+    </inertial>
+    <visual name="fr_thigh_bracket">
+      <geometry>
+        <mesh filename="assets/fr_thigh_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="fr_hip_horn">
+      <geometry>
+        <mesh filename="assets/fr_hip_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fr_knee_MG90S">
+      <geometry>
+        <mesh filename="assets/fr_knee_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="fr_thigh_collision_0">
+      <origin xyz="0 -0.00305 -0.017" rpy="0 0 0" />
+      <geometry>
+        <box size="0.01 0.0025 0.03" />
+      </geometry>
+    </collision>
+    <collision name="fr_thigh_collision_1">
+      <origin xyz="0 0.01725 -0.0496" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fr_2" type="revolute">
+    <parent link="fr_shoulder" />
+    <child link="fr_thigh" />
+    <origin xyz="0 -0.016 -0.037" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.8377580409572782" upper="0.3490658503988659" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="fr_shank">
+    <inertial>
+      <origin xyz="2.949931247e-13 -0.002922681153 -0.01868466929" rpy="0 0 0" />
+      <mass value="0.00248693251831" />
+      <inertia ixx="7.196081842990857e-07" iyy="7.382120084285389e-07" izz="3.714277955244481e-08" ixy="-9.927654099515455e-20" ixz="1.1463319675864996e-17" iyz="-1.7427820703383916e-08" />
+    </inertial>
+    <visual name="fr_lower_leg">
+      <geometry>
+        <mesh filename="assets/fr_lower_leg.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="fr_knee_horn">
+      <geometry>
+        <mesh filename="assets/fr_knee_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="fr_foot_pad">
+      <geometry>
+        <mesh filename="assets/fr_foot_pad.stl" />
+      </geometry>
+      <material name="foot">
+        <color rgba="0.15 0.18 0.2 1" />
+      </material>
+    </visual>
+    <collision name="fr_shank_collision_0">
+      <origin xyz="0 -0.00305 -0.019" rpy="0 0 0" />
+      <geometry>
+        <box size="0.009 0.0025 0.026" />
+      </geometry>
+    </collision>
+    <collision name="fr_shank_collision_1">
+      <origin xyz="0 -0.00305 -0.038" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.005" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fr_3" type="revolute">
+    <parent link="fr_thigh" />
+    <child link="fr_shank" />
+    <origin xyz="0 0 -0.044" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="0.08726646259971647" upper="1.4835298641951802" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="bl_shoulder">
+    <inertial>
+      <origin xyz="-0.001084470576 0.0005996856796 -0.03741114424" rpy="0 0 0" />
+      <mass value="0.0171559814234" />
+      <inertia ixx="4.3076591210602585e-06" iyy="3.9094379506812364e-06" izz="1.1775298861389182e-06" ixy="1.827410375070783e-08" ixz="4.1990432892324164e-07" iyz="-9.204574400149697e-08" />
+    </inertial>
+    <visual name="bl_shoulder_bracket">
+      <geometry>
+        <mesh filename="assets/bl_shoulder_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="bl_roll_horn">
+      <geometry>
+        <mesh filename="assets/bl_roll_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="bl_hip_MG90S">
+      <geometry>
+        <mesh filename="assets/bl_hip_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="bl_shoulder_collision_0">
+      <origin xyz="0 -0.00125 -0.0426" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="bl_shoulder_collision_1">
+      <origin xyz="-0.011 0.002 -0.0185" rpy="0 0 0" />
+      <geometry>
+        <box size="0.003 0.012 0.037" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="bl_1" type="revolute">
+    <parent link="body" />
+    <child link="bl_shoulder" />
+    <origin xyz="-0.054 0.024 0" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.10471975511965978" upper="0.3141592653589793" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="bl_thigh">
+    <inertial>
+      <origin xyz="-0.0008068119681 -0.01315870807 -0.04503467837" rpy="0 0 0" />
+      <mass value="0.0174277595713" />
+      <inertia ixx="4.878721751529063e-06" iyy="3.9653056397401626e-06" izz="1.6983350128052944e-06" ixy="1.0922448220481957e-07" ixz="4.011469989727535e-08" iyz="-1.153992654643935e-06" />
+    </inertial>
+    <visual name="bl_thigh_bracket">
+      <geometry>
+        <mesh filename="assets/bl_thigh_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="bl_hip_horn">
+      <geometry>
+        <mesh filename="assets/bl_hip_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="bl_knee_MG90S">
+      <geometry>
+        <mesh filename="assets/bl_knee_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="bl_thigh_collision_0">
+      <origin xyz="0 0.00305 -0.017" rpy="0 0 0" />
+      <geometry>
+        <box size="0.01 0.0025 0.03" />
+      </geometry>
+    </collision>
+    <collision name="bl_thigh_collision_1">
+      <origin xyz="0 -0.01725 -0.0496" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="bl_2" type="revolute">
+    <parent link="bl_shoulder" />
+    <child link="bl_thigh" />
+    <origin xyz="0 0.016 -0.037" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.8377580409572782" upper="0.3490658503988659" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="bl_shank">
+    <inertial>
+      <origin xyz="-2.949931247e-13 0.002922681153 -0.01868466929" rpy="0 0 0" />
+      <mass value="0.00248693251831" />
+      <inertia ixx="7.196081842990857e-07" iyy="7.382120084285389e-07" izz="3.714277955244481e-08" ixy="-9.927654099515455e-20" ixz="-1.1463319675864996e-17" iyz="1.7427820703383916e-08" />
+    </inertial>
+    <visual name="bl_lower_leg">
+      <geometry>
+        <mesh filename="assets/bl_lower_leg.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="bl_knee_horn">
+      <geometry>
+        <mesh filename="assets/bl_knee_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="bl_foot_pad">
+      <geometry>
+        <mesh filename="assets/bl_foot_pad.stl" />
+      </geometry>
+      <material name="foot">
+        <color rgba="0.15 0.18 0.2 1" />
+      </material>
+    </visual>
+    <collision name="bl_shank_collision_0">
+      <origin xyz="0 0.00305 -0.019" rpy="0 0 0" />
+      <geometry>
+        <box size="0.009 0.0025 0.026" />
+      </geometry>
+    </collision>
+    <collision name="bl_shank_collision_1">
+      <origin xyz="0 0.00305 -0.038" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.005" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="bl_3" type="revolute">
+    <parent link="bl_thigh" />
+    <child link="bl_shank" />
+    <origin xyz="0 0 -0.044" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="0.08726646259971647" upper="1.4835298641951802" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="br_shoulder">
+    <inertial>
+      <origin xyz="-0.001084470576 -0.0005996856796 -0.03741114424" rpy="0 0 0" />
+      <mass value="0.0171559814234" />
+      <inertia ixx="4.3076591210602585e-06" iyy="3.9094379506812364e-06" izz="1.1775298861389188e-06" ixy="-1.8274103750707644e-08" ixz="4.1990432892324164e-07" iyz="9.204574400149774e-08" />
+    </inertial>
+    <visual name="br_shoulder_bracket">
+      <geometry>
+        <mesh filename="assets/br_shoulder_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="br_roll_horn">
+      <geometry>
+        <mesh filename="assets/br_roll_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="br_hip_MG90S">
+      <geometry>
+        <mesh filename="assets/br_hip_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="br_shoulder_collision_0">
+      <origin xyz="0 0.00125 -0.0426" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+    <collision name="br_shoulder_collision_1">
+      <origin xyz="-0.011 -0.002 -0.0185" rpy="0 0 0" />
+      <geometry>
+        <box size="0.003 0.012 0.037" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="br_1" type="revolute">
+    <parent link="body" />
+    <child link="br_shoulder" />
+    <origin xyz="-0.054 -0.024 0" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.3141592653589793" upper="0.10471975511965978" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="br_thigh">
+    <inertial>
+      <origin xyz="-0.0008068119681 0.01315870807 -0.04503467837" rpy="0 0 0" />
+      <mass value="0.0174277595713" />
+      <inertia ixx="4.878721751529063e-06" iyy="3.9653056397401626e-06" izz="1.6983350128052944e-06" ixy="-1.0922448220481957e-07" ixz="4.011469989727535e-08" iyz="1.153992654643935e-06" />
+    </inertial>
+    <visual name="br_thigh_bracket">
+      <geometry>
+        <mesh filename="assets/br_thigh_bracket.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="br_hip_horn">
+      <geometry>
+        <mesh filename="assets/br_hip_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="br_knee_MG90S">
+      <geometry>
+        <mesh filename="assets/br_knee_MG90S.stl" />
+      </geometry>
+      <material name="servo">
+        <color rgba="0.12 0.22 0.38 1" />
+      </material>
+    </visual>
+    <collision name="br_thigh_collision_0">
+      <origin xyz="0 -0.00305 -0.017" rpy="0 0 0" />
+      <geometry>
+        <box size="0.01 0.0025 0.03" />
+      </geometry>
+    </collision>
+    <collision name="br_thigh_collision_1">
+      <origin xyz="0 0.01725 -0.0496" rpy="0 0 0" />
+      <geometry>
+        <box size="0.0122 0.0225 0.0228" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="br_2" type="revolute">
+    <parent link="br_shoulder" />
+    <child link="br_thigh" />
+    <origin xyz="0 -0.016 -0.037" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.8377580409572782" upper="0.3490658503988659" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="br_shank">
+    <inertial>
+      <origin xyz="-2.949931247e-13 -0.002922681153 -0.01868466929" rpy="0 0 0" />
+      <mass value="0.00248693251831" />
+      <inertia ixx="7.196081842990857e-07" iyy="7.382120084285389e-07" izz="3.714277955244481e-08" ixy="9.927654099515455e-20" ixz="-1.1463319675864996e-17" iyz="-1.7427820703383916e-08" />
+    </inertial>
+    <visual name="br_lower_leg">
+      <geometry>
+        <mesh filename="assets/br_lower_leg.stl" />
+      </geometry>
+      <material name="print">
+        <color rgba="0.81 0.86 0.91 1" />
+      </material>
+    </visual>
+    <visual name="br_knee_horn">
+      <geometry>
+        <mesh filename="assets/br_knee_horn.stl" />
+      </geometry>
+      <material name="horn">
+        <color rgba="0.18 0.19 0.2 1" />
+      </material>
+    </visual>
+    <visual name="br_foot_pad">
+      <geometry>
+        <mesh filename="assets/br_foot_pad.stl" />
+      </geometry>
+      <material name="foot">
+        <color rgba="0.15 0.18 0.2 1" />
+      </material>
+    </visual>
+    <collision name="br_shank_collision_0">
+      <origin xyz="0 -0.00305 -0.019" rpy="0 0 0" />
+      <geometry>
+        <box size="0.009 0.0025 0.026" />
+      </geometry>
+    </collision>
+    <collision name="br_shank_collision_1">
+      <origin xyz="0 -0.00305 -0.038" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.005" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="br_3" type="revolute">
+    <parent link="br_thigh" />
+    <child link="br_shank" />
+    <origin xyz="0 0 -0.044" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="0.08726646259971647" upper="1.4835298641951802" effort="0.06" velocity="4.0" />
+    <dynamics damping="0.002" friction="0.001" />
+  </joint>
+  <link name="imu_link" />
+  <joint name="imu_fixed" type="fixed">
+    <parent link="body" />
+    <child link="imu_link" />
+    <origin xyz="0 0 0.026" rpy="0 0 0" />
+  </joint>
+</robot>
