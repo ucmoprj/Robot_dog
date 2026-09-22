@@ -1,0 +1,30 @@
+# 2단계 태스크 (gait 버전): 전진 보행 + 자연스러운 걸음걸이
+# walk_forward.yaml과 비교하기 위한 새 버전 — walk_forward.yaml은 그대로 두고
+# feet_air_time / gait_symmetry 보상만 추가했다. 발 접촉 센서가 있는
+# scene_gait.xml(env_gait.py / vec_env_gait.py 경유)이 필요하다.
+
+task: walk_forward_gait
+
+episode_length_s: 8.0
+
+target_height: 0.1196
+height_scale: 0.04
+
+target_vx: 0.08              # walk_forward.yaml(0.05)보다 살짝 올림 — 너무 느리면
+                              # 다리를 크게 안 움직이고 셔플링만으로 달성돼버림
+velocity_scale: 0.05
+
+fall_height: 0.05
+fall_upright: 0.6
+
+reward_weights:
+  upright: 1.0
+  height: 0.5
+  velocity_track: 1.0
+  lateral_penalty: 0.3
+  yaw_penalty: 0.2
+  action_rate_penalty: 0.01
+  torque_penalty: 0.001
+  alive: 0.3
+  feet_air_time: 8.0          # 발을 들어올렸다 착지할 때 공중 체류시간만큼 보상
+  gait_symmetry: 0.3          # 대각선 다리 쌍이 같이 움직이는 트롯 패턴 유도

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="mg90s_dog_scene_gait">
+  <include file="robot_gait.xml" />
+  <visual>
+    <global offwidth="1400" offheight="1000" />
+    <headlight ambient="0.45 0.45 0.45" diffuse="0.65 0.65 0.65" />
+  </visual>
+  <worldbody>
+    <light pos="0.3 -0.3 0.8" dir="-0.3 0.3 -0.8" />
+    <geom name="floor" type="plane" size="2 2 0.1" rgba="0.92 0.94 0.96 1" friction="0.8 0.005 0.0001" />
+  </worldbody>
+</mujoco>
