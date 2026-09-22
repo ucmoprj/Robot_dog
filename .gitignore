@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Training run outputs (checkpoints, TensorBoard events, stray stdout logs) —
+# these are generated artifacts, not program files, and regrow every run.
+train/logs/
+train/*.log
+train/logs_*_stdout.log

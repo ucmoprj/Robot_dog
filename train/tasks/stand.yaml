@@ -1,0 +1,25 @@
+# 1단계 태스크: 서기 / 균형 (Stand & Balance)
+# 목표: 넘어지지 않고 목표 높이에서 조용히, 효율적으로 버티기.
+# 약한 MG90S 서보(토크 예산 0.06 N·m)로도 현실적으로 달성 가능한 첫 목표.
+
+task: stand
+
+# 에피소드/물리 설정
+episode_length_s: 5.0       # 한 에피소드 최대 길이(초)
+
+# 보상 계산에 쓰는 목표값
+target_height: 0.1196        # design_summary.json의 roll_axis_height_mm 기준 (m)
+height_scale: 0.03           # 높이 보상의 관용폭 (작을수록 엄격)
+
+# 넘어짐(종료) 판정 기준
+fall_height: 0.05            # 몸체 높이가 이 아래로 내려가면 실패
+fall_upright: 0.6            # 직립도(1.0=완전직립)가 이 아래로 내려가면 실패
+
+# 보상 부품별 가중치 (reward_terms.py의 REGISTRY 키와 일치해야 함)
+reward_weights:
+  upright: 1.0
+  height: 1.0
+  ang_vel_penalty: 0.05
+  action_rate_penalty: 0.01
+  torque_penalty: 0.001
+  alive: 0.5

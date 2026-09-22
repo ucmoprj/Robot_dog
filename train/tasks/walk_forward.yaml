@@ -1,0 +1,26 @@
+# 2단계 태스크: 전진 보행 (Walk Forward)
+# stand.yaml이 잘 되는 걸 확인한 뒤에 시도할 것.
+# stand.yaml의 항목을 대부분 그대로 두고 속도 추적 보상만 얹은 형태.
+
+task: walk_forward
+
+episode_length_s: 8.0
+
+target_height: 0.1196
+height_scale: 0.04
+
+target_vx: 0.05              # 목표 전진 속도(m/s). 프로토타입이라 느리게 시작
+velocity_scale: 0.05
+
+fall_height: 0.05
+fall_upright: 0.6
+
+reward_weights:
+  upright: 1.0
+  height: 0.5
+  velocity_track: 1.0
+  lateral_penalty: 0.3
+  yaw_penalty: 0.2
+  action_rate_penalty: 0.01
+  torque_penalty: 0.001
+  alive: 0.3
