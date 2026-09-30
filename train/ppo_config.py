@@ -1,14 +1,14 @@
-"""PPO/신경망 하이퍼파라미터 (train.py와 play.py가 공유).
+"""PPO / network hyperparameters (shared by train.py and play.py).
 
-체크포인트를 다시 불러오려면(play.py) 학습 때와 똑같은 네트워크 구조가
-필요하므로, 이 설정을 한 곳에 두고 두 스크립트가 같이 쓴다.
+Reloading a checkpoint (play.py) needs exactly the network structure used in
+training, so this config lives in one place and both scripts use it.
 """
 from __future__ import annotations
 
 
 def build_train_cfg(num_steps_per_env: int = 24, save_interval: int = 50) -> dict:
-    """PPO/네트워크 하이퍼파라미터. 태스크가 바뀌어도 보통 그대로 둔다
-    (실험할 때 건드리는 건 reward_weights = tasks/*.yaml 쪽)."""
+    """PPO / network hyperparameters. Usually left alone when the task changes
+    (experiments tune reward_weights in tasks/*.yaml instead)."""
     return {
         "algorithm": {
             "class_name": "PPO",

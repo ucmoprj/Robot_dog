@@ -1,0 +1,38 @@
+{
+  "base": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "cap_left": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "cap_right": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "carriage": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "fit_coupon": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "jaw_left": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "jaw_right": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "mast": {
+    "watertight": true,
+    "positive_volume": true
+  },
+  "step_roundtrip": {
+    "valid": true,
+    "solids": 7
+  }
+}
