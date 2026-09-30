@@ -1,0 +1,30 @@
+# Stage 2 task (gait version): walk forward + natural gait
+# A new version for comparison with walk_forward.yaml, which stays unchanged.
+# Only the feet_air_time / gait_symmetry rewards are added. Requires
+# scene_gait.xml with foot contact sensors (via env_gait.py / vec_env_gait.py).
+
+task: walk_forward_gait
+
+episode_length_s: 8.0
+
+target_height: 0.1196
+height_scale: 0.04
+
+target_vx: 0.08              # a bit higher than walk_forward.yaml (0.05); too slow and
+                              # the robot reaches it by shuffling without real steps
+velocity_scale: 0.05
+
+fall_height: 0.05
+fall_upright: 0.6
+
+reward_weights:
+  upright: 1.0
+  height: 0.5
+  velocity_track: 1.0
+  lateral_penalty: 0.3
+  yaw_penalty: 0.2
+  action_rate_penalty: 0.01
+  torque_penalty: 0.001
+  alive: 0.3
+  feet_air_time: 8.0          # reward air time when a lifted foot lands
+  gait_symmetry: 0.3          # encourage a trot: diagonal leg pairs move together
