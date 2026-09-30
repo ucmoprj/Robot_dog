@@ -1,11 +1,11 @@
-"""단일 환경 Gym 스타일 래퍼 (CPU mujoco 기준).
+"""Single-environment Gym-style wrapper (CPU mujoco).
 
-개발/디버깅/시각화(view_task.py, 추후 play.py)용이다. 대량 병렬 학습은 같은
-관측/보상 설계를 mujoco_warp 배치 버전으로 옮긴 vec_env.py에서 수행한다 —
-물리 계산 방식만 CPU 1개 vs GPU N개로 다를 뿐, reward_terms.py의 보상 로직은
-공유한다 (SimState라는 공통 컨테이너를 통해).
+Used for development, debugging and visualization (view_task.py, play.py). Massively
+parallel training runs in vec_env.py, which ports the same observation/reward design
+to a mujoco_warp batch. Only the physics backend differs (1 CPU env vs N GPU envs);
+the reward logic in reward_terms.py is shared through a common SimState container.
 
-사용 예:
+Example:
     env = QuadrupedEnv(load_task_config("tasks/stand.yaml"))
     obs = env.reset()
     obs, reward, done, info = env.step(action)
@@ -24,8 +24,8 @@ from reward_terms import REGISTRY, SimState, is_fallen
 ROBOT_XML = Path(__file__).resolve().parent.parent / "dog_mujoco" / "scene.xml"
 
 N_JOINTS = 12
-N_ACTION_HISTORY = 2  # 현재 + 직전 명령
-OBS_DIM = 3 + 3 + N_JOINTS * N_ACTION_HISTORY  # gyro(3) + accel(3) + 명령이력(24) = 30
+N_ACTION_HISTORY = 2  # current + previous command
+OBS_DIM = 3 + 3 + N_JOINTS * N_ACTION_HISTORY  # gyro(3) + accel(3) + command history(24) = 30
 
 _CONFIG_DEFAULTS = {
     "height_scale": 0.03,
@@ -39,7 +39,7 @@ _CONFIG_DEFAULTS = {
 
 
 def load_task_config(path: str | Path) -> dict:
-    """tasks/*.yaml을 읽고 누락된 값은 기본값으로 채운다."""
+    """Read tasks/*.yaml and fill missing values with defaults."""
     with open(path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     for key, val in _CONFIG_DEFAULTS.items():
@@ -47,13 +47,13 @@ def load_task_config(path: str | Path) -> dict:
     unknown = set(cfg["reward_weights"]) - set(REGISTRY)
     if unknown:
         raise ValueError(
-            f"{path} 의 reward_weights에 REGISTRY에 없는 이름이 있습니다: {unknown}"
+            f"{path}: reward_weights contains names not in REGISTRY: {unknown}"
         )
     return cfg
 
 
 class QuadrupedEnv:
-    """gym 유사 인터페이스: reset() -> obs, step(action) -> (obs, reward, done, info)."""
+    """Gym-like interface: reset() -> obs, step(action) -> (obs, reward, done, info)."""
 
     def __init__(self, task_config: dict, xml_path: Path = ROBOT_XML, seed: int | None = None):
         self.cfg = task_config
@@ -63,7 +63,7 @@ class QuadrupedEnv:
         self.rng = np.random.default_rng(seed)
 
         self.dt = self.model.opt.timestep
-        self.control_decimation = 20  # 물리 step(1ms) x 20 = 50Hz 제어 주기 (README 실물 제약과 일치)
+        self.control_decimation = 20  # physics step (1 ms) x 20 = 50 Hz control rate (matches the hardware limit in README)
         self.max_steps = max(
             1, int(task_config["episode_length_s"] / (self.dt * self.control_decimation))
         )
@@ -78,12 +78,12 @@ class QuadrupedEnv:
         self._prev_action = np.zeros(N_JOINTS, dtype=np.float32)
         self._step_count = 0
 
-    # ---- 내부 유틸 -------------------------------------------------------
+    # ---- internal helpers ------------------------------------------------
     def _ctrlrange(self) -> np.ndarray:
         return self.model.actuator_ctrlrange  # (12, 2)
 
     def _sample_reset_qpos(self) -> np.ndarray:
-        """간단한 domain randomization: 초기 관절각/높이를 살짝 무작위화한다."""
+        """Simple domain randomization: slightly randomize initial joint angles and height."""
         qpos = self._default_qpos.copy()
         qpos[7:] += self.rng.uniform(-0.05, 0.05, size=N_JOINTS)
         qpos[2] += self.rng.uniform(-0.005, 0.005)
@@ -122,7 +122,7 @@ class QuadrupedEnv:
         total = sum(self.weights[name] * terms[name] for name in self.weights)
         return float(total), terms
 
-    # ---- gym 인터페이스 ---------------------------------------------------
+    # ---- gym interface ---------------------------------------------------
     def reset(self) -> np.ndarray:
         mujoco.mj_resetData(self.model, self.data)
         self.data.qpos[:] = self._sample_reset_qpos()
@@ -152,7 +152,7 @@ class QuadrupedEnv:
 
 
 class _RewardCtx:
-    """cfg 딕셔너리를 reward_terms.py 함수들이 기대하는 속성 접근(ctx.target_height 등)으로 감싼다."""
+    """Wrap the cfg dict in the attribute access (ctx.target_height, ...) that reward_terms.py expects."""
 
     def __init__(self, cfg: dict):
         self.target_height = cfg["target_height"]

@@ -1,0 +1,1281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MG90S Servo Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single bench notebook. Sticky section rail on top, each section = explanation + controls on the left, live instrument on the right. */
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --panel-2: #f6f8fa;
+  --ink: #15202b;
+  --ink-2: #46525f;
+  --muted: #6f7b88;
+  --line: #d6dde5;
+  --accent: #2b59c3;
+  --accent-soft: #e2e9f8;
+  --servo: #2a3440;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --panel: #161f28; --panel-2: #1b2530; --ink: #e6ecf2; --ink-2: #a8b3be;
+    --muted: #7f8b97; --line: #2b3643; --accent: #7b9cec; --accent-soft: #1d2a45; --servo: #8a98a8;
+    --series-1: #3987e5; --series-2: #d95926; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --panel: #161f28; --panel-2: #1b2530; --ink: #e6ecf2; --ink-2: #a8b3be;
+  --muted: #7f8b97; --line: #2b3643; --accent: #7b9cec; --accent-soft: #1d2a45; --servo: #8a98a8;
+  --series-1: #3987e5; --series-2: #d95926; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15.5px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.08; margin: 0; }
+h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); font-weight: 700; letter-spacing: 0.005em; }
+h2 { font-size: 2rem; font-weight: 700; }
+h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.01em; }
+p { margin: 0; max-width: 65ch; }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+header.hero { padding-block: 40px 22px; display: grid; gap: 14px; }
+header.hero .lede { color: var(--ink-2); font-size: 1.08rem; }
+.specline { display: flex; flex-wrap: wrap; gap: 8px; }
+.spec { font-family: var(--f-mono); font-size: 0.8rem; border: 1px solid var(--line); background: var(--panel); padding: 3px 9px; border-radius: 4px; color: var(--ink-2); }
+
+nav.rail { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav.rail .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; }
+nav.rail a { font-family: var(--f-display); font-weight: 600; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--ink-2); text-decoration: none; padding: 5px 12px; border-radius: 4px; white-space: nowrap; }
+nav.rail a:hover, nav.rail a:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+nav.rail a span { font-family: var(--f-mono); font-size: 0.75rem; color: var(--accent); margin-right: 6px; }
+
+main { display: grid; gap: 28px; padding-block: 26px 60px; }
+section.block { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 26px clamp(16px, 3vw, 30px); display: grid; gap: 20px; scroll-margin-top: 64px; }
+.sec-head { display: grid; gap: 8px; }
+.sec-head .num { font-family: var(--f-mono); color: var(--accent); font-size: 0.85rem; letter-spacing: 0.06em; }
+.sec-head p { color: var(--ink-2); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 26px; align-items: start; }
+.cols > * { min-width: 0; }
+@media (max-width: 820px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.stack { display: grid; gap: 14px; }
+.stack-s { display: grid; gap: 8px; }
+
+.formula { font-family: var(--f-mono); font-size: 0.86rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; white-space: pre; color: var(--ink); }
+.formula .hl { color: var(--accent); font-weight: 500; }
+.note { font-size: 0.9rem; color: var(--ink-2); }
+.note b { color: var(--ink); }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .compare { grid-template-columns: 1fr; } }
+.compare > div { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; background: var(--panel-2); }
+.compare h3 { margin-bottom: 6px; }
+.compare ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 0.92rem; }
+
+/* controls */
+label.ctl { display: grid; gap: 4px; font-size: 0.88rem; color: var(--ink-2); }
+label.ctl .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+label.ctl output, .val { font-family: var(--f-mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+select, input[type=number] { font: inherit; font-size: 0.92rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; width: 100%; }
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid2 > * { min-width: 0; }
+@media (max-width: 460px) { .grid2 { grid-template-columns: 1fr; } }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+button { font: inherit; font-size: 0.88rem; cursor: pointer; border-radius: 5px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); padding: 6px 11px; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); font-weight: 700; }
+button.key { font-family: var(--f-mono); min-width: 52px; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 6px 12px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+
+/* status chips: color + icon + label */
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
+.chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.chip.good::before { background: var(--good); }
+.chip.warning::before { background: var(--warning); }
+.chip.serious::before { background: var(--serious); }
+.chip.critical::before { background: var(--critical); }
+.msg { font-size: 0.9rem; color: var(--ink-2); min-height: 1.4em; }
+
+/* calibration */
+.instrument { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); padding: 14px; display: grid; gap: 10px; }
+.instrument svg { width: 100%; height: auto; display: block; }
+.readouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.readouts > div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.readouts .k { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--f-mono); }
+.readouts .v { font-family: var(--f-mono); font-size: 1.12rem; font-variant-numeric: tabular-nums; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; font-size: 0.92rem; color: var(--ink-2); padding: 6px 8px; border-radius: 6px; }
+ol.steps li::before { content: counter(s); font-family: var(--f-mono); font-size: 0.8rem; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); background: var(--panel); }
+ol.steps li.current { background: var(--accent-soft); color: var(--ink); }
+ol.steps li.current::before { border-color: var(--accent); color: var(--accent); }
+ol.steps li.done::before { content: "✓"; background: var(--good); border-color: var(--good); color: #fff; }
+table.cal { width: 100%; border-collapse: collapse; font-family: var(--f-mono); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+table.cal td, table.cal th { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+table.cal th { color: var(--muted); font-weight: 400; }
+.tablewrap { overflow-x: auto; }
+table.data { border-collapse: collapse; font-size: 0.88rem; width: 100%; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.data th:first-child, table.data td:first-child { text-align: left; }
+table.data th { color: var(--muted); font-weight: 400; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+table.data tr.sel td { background: var(--accent-soft); font-weight: 700; }
+details summary { cursor: pointer; font-size: 0.88rem; color: var(--ink-2); }
+
+/* stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; background: var(--panel-2); display: grid; gap: 2px; }
+.tile .k { font-size: 0.78rem; color: var(--muted); }
+.tile .v { font-family: var(--f-display); font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile .v small { font-size: 1rem; color: var(--ink-2); margin-left: 3px; }
+.tile .s { font-size: 0.78rem; color: var(--ink-2); font-family: var(--f-mono); }
+.tile.key { border-color: var(--accent); background: var(--accent-soft); }
+
+/* charts */
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .axis text, .chart text.lab { fill: var(--muted); font-family: var(--f-mono); font-size: 10.5px; }
+.chart .grid line { stroke: var(--line); stroke-width: 1; }
+.chart .ref line { stroke-width: 1.5; stroke-dasharray: 5 4; }
+.chart text.reflab { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.84rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+.legend i.dash { border-top-style: dashed; }
+.charttitle { font-size: 0.9rem; font-weight: 700; color: var(--ink); }
+.tip { position: fixed; z-index: 50; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem; box-shadow: 0 4px 16px rgba(0,0,0,.14); display: grid; gap: 2px; min-width: 120px; }
+.tip .t { color: var(--muted); font-family: var(--f-mono); font-size: 0.75rem; }
+.tip .r { display: flex; align-items: center; gap: 7px; }
+.tip .r i { width: 12px; border-top: 2px solid; display: inline-block; }
+.tip .r b { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* checklist */
+ol.bring { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; counter-reset: b; }
+ol.bring li { counter-increment: b; display: grid; grid-template-columns: auto 34px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
+ol.bring li::before { content: counter(b, decimal-leading-zero); grid-column: 2; grid-row: 1; font-family: var(--f-mono); color: var(--accent); font-size: 0.85rem; padding-top: 2px; }
+ol.bring input { grid-column: 1; grid-row: 1; width: 18px; height: 18px; margin-top: 3px; accent-color: var(--good); }
+ol.bring .body { grid-column: 3; grid-row: 1; display: grid; gap: 2px; min-width: 0; }
+ol.bring .body b { font-size: 0.98rem; }
+ol.bring .body span { font-size: 0.88rem; color: var(--ink-2); }
+ol.bring li.checked .body b { text-decoration: line-through; color: var(--muted); }
+footer { color: var(--muted); font-size: 0.82rem; padding-block: 0 40px; }
+
+/* beginner aids */
+.inshort { border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 0.95rem; color: var(--ink); max-width: none; }
+.inshort b { font-family: var(--f-mono); font-size: 0.76rem; letter-spacing: 0.08em; color: var(--accent); margin-right: 8px; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: f; }
+@media (max-width: 720px) { .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .flow { grid-template-columns: minmax(0, 1fr); } }
+.flow li { counter-increment: f; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; background: var(--panel-2); display: grid; align-content: start; gap: 4px; font-size: 0.9rem; color: var(--ink-2); }
+.flow li::before { content: "STEP " counter(f); font-family: var(--f-mono); font-size: 0.74rem; color: var(--accent); letter-spacing: 0.06em; }
+.flow li b { color: var(--ink); font-size: 0.98rem; }
+dl.gloss { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 0.92rem; }
+dl.gloss dt { font-family: var(--f-mono); font-size: 0.86rem; color: var(--ink); }
+dl.gloss dd { margin: 0; color: var(--ink-2); }
+@media (max-width: 460px) { dl.gloss { grid-template-columns: 1fr; } dl.gloss dd { margin-bottom: 6px; } }
+.hint { border: 1px dashed var(--accent); border-radius: 6px; padding: 9px 12px; font-size: 0.92rem; color: var(--ink); background: var(--panel); }
+.hint .big { font-family: var(--f-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+kbd { font-family: var(--f-mono); font-size: 0.82em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); color: var(--ink); }
+ol.bring .body code { font-size: 0.82rem; color: var(--ink); overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="wrap hero">
+  <div class="eyebrow">MG90S Dog R1 · 12 servos · PCA9685 · ESP32</div>
+  <h1>MG90S Servo Bench</h1>
+  <p class="lede">Hands-on notes for getting from a printed frame to a robot that is safe to run a trained policy on. Each section is a small simulator: move the controls and watch what changes. Nothing here talks to your robot, so you can't break anything.</p>
+  <div class="specline">
+    <span class="spec">thigh 44 mm</span><span class="spec">shank 38 mm</span><span class="spec">stand: roll 0° · hip −19.4° · knee 42°</span><span class="spec">50 Hz PWM</span><span class="spec">~0.31 kg</span>
+  </div>
+</header>
+
+<nav class="rail" aria-label="Sections">
+  <div class="wrap">
+    <a href="#start"><span>00</span>Start here</a>
+    <a href="#calibrate"><span>01</span>Calibrate</a>
+    <a href="#power"><span>02</span>Power budget</a>
+    <a href="#wires"><span>03</span>Wires</a>
+    <a href="#capacitor"><span>04</span>Capacitor</a>
+    <a href="#bringup"><span>05</span>Bring-up order</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 0. START HERE ============ -->
+<section class="block" id="start">
+  <div class="sec-head">
+    <div class="num">00 · START HERE</div>
+    <h2>The whole job in four steps</h2>
+    <p>First time? Read the blue <b>In short</b> box at the top of each section. That box is all you need to act on. The sliders and charts below it explain why.</p>
+  </div>
+  <ol class="flow">
+    <li><b>Practice here</b><span>Calibrate the virtual leg in section 01 until the Verify check says <i>match</i>. About 10 minutes.</span></li>
+    <li><b>Wire and power up</b><span>Follow sections 02–04 once. Plug in one servo and check that it moves.</span></li>
+    <li><b>Calibrate the real robot</b><span>Robot on the stand, legs in the air. Run <code>python hardware/calibrate.py --port COM5</code>, one joint at a time.</span></li>
+    <li><b>Check, then run</b><span>Go down the checklist in section 05. Run the policy only after all 12 joints are done.</span></li>
+  </ol>
+  <div class="cols">
+    <div class="stack-s">
+      <h3>Words you will see</h3>
+      <dl class="gloss">
+        <dt>pulse (µs)</dt><dd>The only thing a servo understands. About 1000–2000 µs covers its range, and 1500 µs is roughly the middle.</dd>
+        <dt>q (rad or °)</dt><dd>A joint angle as the simulator and the policy see it.</dd>
+        <dt>calibration</dt><dd>The table that turns q into a pulse, one row per servo.</dd>
+        <dt>horn</dt><dd>The plastic arm pressed onto the servo shaft. Its teeth decide where the leg starts.</dd>
+        <dt>stall</dt><dd>The servo pushes against something and can't reach its target. It buzzes, gets hot and draws about 0.7 A. Back off right away.</dd>
+      </dl>
+    </div>
+    <div class="stack-s">
+      <h3>Before you touch the real robot</h3>
+      <ul class="note" style="margin:0;padding-left:18px">
+        <li>A phone inclinometer app, or any protractor</li>
+        <li>A separate 5 V supply for the servos, rated 5 A or more (never the ESP32's USB)</li>
+        <li>ESP32 flashed with <code>hardware/esp32_servo_bridge</code></li>
+        <li>Body level on the stand, all four feet in the air</li>
+        <li>With power off, each joint turned by hand once to make sure no cable catches</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1. CALIBRATION ============ -->
+<section class="block" id="calibrate">
+  <div class="sec-head">
+    <div class="num">01 · CALIBRATION</div>
+    <h2>Teach the software where the leg really is</h2>
+    <p>The policy says "knee at 42°". The servo only understands "1620 µs". Calibration measures how to convert one into the other, separately for each of the 12 servos. Each servo needs its own numbers for three reasons: the horn can sit on any tooth of the shaft, servos differ slightly inside, and left and right legs turn in opposite directions.</p>
+  </div>
+  <p class="inshort"><b>IN SHORT</b>For each joint: put the leg in the standing pose and mark it. Turn it a known angle and mark again. Mark both ends just before it hits something. Then run the sweep and check the leg follows. Four marks per joint, twelve joints.</p>
+
+  <div class="compare">
+    <div>
+      <h3>Calibration: measure the hardware</h3>
+      <ul><li>Neutral pulse for the reference pose (<code>center_us</code>)</li><li>Rotation sign (<code>direction</code>)</li><li>Pulse per radian (<code>us_per_rad</code>)</li><li>Safe physical range (<code>min_us</code>, <code>max_us</code>)</li></ul>
+    </div>
+    <div>
+      <h3>Motion control: use the range well</h3>
+      <ul><li>Speed and acceleration limits</li><li>Interpolation between poses</li><li>Foot trajectories and gaits</li><li>The trained policy itself</li></ul>
+    </div>
+  </div>
+
+  <div class="formula" id="calFormula">us = center_us + direction × us_per_rad × (q − zero_rad)      then clamp to [min_us, max_us]</div>
+
+  <div class="cols">
+    <div class="stack">
+      <div class="stack-s">
+        <div class="eyebrow">Joint on the bench</div>
+        <div class="seg" role="group" aria-label="Joint">
+          <button type="button" id="jRoll" aria-pressed="false">Roll · fl_1</button>
+          <button type="button" id="jHip" aria-pressed="true">Hip · fl_2</button>
+          <button type="button" id="jKnee" aria-pressed="false">Knee · fl_3</button>
+        </div>
+      </div>
+
+      <div class="seg" role="group" aria-label="Mode">
+        <button type="button" id="mCal" aria-pressed="true">1 · Calibrate</button>
+        <button type="button" id="mVer" aria-pressed="false">2 · Verify</button>
+      </div>
+
+      <div id="calPanel" class="stack">
+        <ol class="steps" id="calSteps">
+          <li data-step="0"><span>Nudge the pulse until the leg reads the <b>standing angle</b>, then press <b>Mark center</b>.</span></li>
+          <li data-step="1"><span>Turn the leg <b id="refTxt">+30°</b> further, in the direction shown below, then press <b>Mark reference</b>.</span></li>
+          <li data-step="2"><span>Go toward one end. Stop a few degrees <i>before</i> it touches anything, then press <b>Mark limit A</b>.</span></li>
+          <li data-step="3"><span>Do the same at the other end and press <b>Mark limit B</b>.</span></li>
+        </ol>
+        <div class="hint" id="calHint" aria-live="polite"></div>
+        <p class="note" id="plusTxt"></p>
+        <label class="ctl" for="pulse">
+          <span class="row"><span>Pulse sent to PCA9685</span><output id="pulseOut">1500 µs</output></span>
+          <input type="range" id="pulse" min="500" max="2500" step="1" value="1500">
+        </label>
+        <div class="btns">
+          <button class="key" type="button" data-nudge="-10">−10</button>
+          <button class="key" type="button" data-nudge="-2">−2</button>
+          <button class="key" type="button" data-nudge="2">+2</button>
+          <button class="key" type="button" data-nudge="10">+10</button>
+        </div>
+        <div class="btns">
+          <button type="button" class="primary" id="markCenter">Mark center</button>
+          <button type="button" id="markRef">Mark reference</button>
+          <button type="button" id="markA">Mark limit A</button>
+          <button type="button" id="markB">Mark limit B</button>
+        </div>
+        <div class="msg" id="calMsg" aria-live="polite"></div>
+        <details>
+          <summary>Center far from 1500 µs, or the sweep gets clamped? Re-seat the horn.</summary>
+          <div class="stack-s" style="margin-top:8px">
+            <label class="ctl" for="teeth">Teeth on your servo's shaft (count them, or measure how far one tooth moves the leg)
+              <select id="teeth"><option value="20">20 teeth · 18° per tooth</option><option value="25" selected>25 teeth · 14.4° per tooth</option></select></label>
+            <div class="btns">
+              <button type="button" id="reseatL">Re-seat horn −1 tooth</button>
+              <button type="button" id="reseatR">Re-seat horn +1 tooth</button>
+            </div>
+            <p class="note">Moving the horn by one tooth shifts the whole leg by one tooth angle and clears this joint's marks. Start again at step 1. Aim for a standing pose near 1500 µs so the servo has room on both sides.</p>
+          </div>
+        </details>
+        <div class="btns"><button type="button" id="newServo">Practice again with a new random servo</button></div>
+      </div>
+
+      <div id="verPanel" class="stack" hidden>
+        <p class="note">Now the simulator commands an angle, your calibration converts it to a pulse, and the real servo moves. The dashed leg is where the simulator thinks the leg is.</p>
+        <label class="ctl" for="qsim">
+          <span class="row"><span>Simulator command q</span><output id="qsimOut">0°</output></span>
+          <input type="range" id="qsim" min="-48" max="20" step="0.5" value="-19.4">
+        </label>
+        <div class="btns"><button type="button" id="sweep">Sweep full sim range</button></div>
+        <div class="msg" id="verMsg" aria-live="polite"></div>
+      </div>
+
+      <div class="tablewrap">
+        <table class="cal" aria-label="Calibration values">
+          <thead><tr><th>field</th><th>value</th><th>true servo (hidden on a real robot)</th></tr></thead>
+          <tbody id="calTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="instrument">
+      <svg id="legSvg" viewBox="0 0 380 330" role="img" aria-label="Side view of the front-left leg"></svg>
+      <div class="readouts">
+        <div><div class="k">Measured</div><div class="v" id="rMeas">0°</div></div>
+        <div><div class="k">Target</div><div class="v" id="rTarget">0°</div></div>
+        <div><div class="k">Servo</div><div class="v" id="rState">ok</div></div>
+      </div>
+      <p class="note" id="viewNote">Measured angle is what a phone inclinometer would read, rounded to 0.5°. Front of the robot is to the right.</p>
+      <p class="note" id="measureNote"></p>
+    </div>
+  </div>
+
+  <details>
+    <summary>On the real robot: which key in <code>calibrate.py</code> does what?</summary>
+    <div class="tablewrap" style="margin-top:8px">
+      <table class="data">
+        <thead><tr><th>On this page</th><th>In calibrate.py</th></tr></thead>
+        <tbody>
+          <tr><td>−10 / +10 µs</td><td><kbd>a</kbd> / <kbd>d</kbd></td></tr>
+          <tr><td>−2 / +2 µs</td><td><kbd>z</kbd> / <kbd>c</kbd></td></tr>
+          <tr><td>Mark center</td><td><kbd>1</kbd></td></tr>
+          <tr><td>Mark reference</td><td><kbd>2</kbd></td></tr>
+          <tr><td>Mark limit A / B</td><td><kbd>3</kbd> / <kbd>4</kbd></td></tr>
+          <tr><td>Verify → Sweep full sim range</td><td><kbd>t</kbd></td></tr>
+          <tr><td>Stop pushing (servo goes limp)</td><td><kbd>r</kbd></td></tr>
+          <tr><td>Save · next joint · quit</td><td><kbd>s</kbd> · <kbd>n</kbd> · <kbd>q</kbd></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:8px">Press <kbd>s</kbd> after every joint. If you stop halfway, resume with <code>--joint fr_3</code> (or whichever joint is next).</p>
+  </details>
+</section>
+
+<!-- ============ 2. POWER ============ -->
+<section class="block" id="power">
+  <div class="sec-head">
+    <div class="num">02 · POWER BUDGET</div>
+    <h2>How much current do 12 servos need?</h2>
+    <p>Multiply the servo count by the current per servo in each situation. Size the supply for the walking average with margin, and let a capacitor cover the short peaks. MG90S currents are not published by the maker; the defaults are typical figures, so replace them with numbers from an inline meter once you have one.</p>
+  </div>
+  <p class="inshort"><b>IN SHORT</b>Use a <strong>5 V supply rated 5–6 A</strong> for the servos. The numbers below show why. Once you own an inline current meter, replace the default currents with your own readings.</p>
+  <div class="formula">worst case   = N × I_stall
+walking avg  = N × I_moving
+supply ≥ max(walking avg × 1.5, worst case × 0.6)
+runtime (min) = battery Wh × UBEC efficiency ÷ (5 V × walking avg) × 60</div>
+  <div class="cols">
+    <div class="stack">
+      <label class="ctl" for="nServo"><span class="row"><span>Number of servos</span><output id="nServoOut">12</output></span>
+        <input type="range" id="nServo" min="1" max="16" step="1" value="12"></label>
+      <div class="grid2">
+        <label class="ctl" for="iHold">Holding weight (A / servo)<input type="number" id="iHold" min="0" max="2" step="0.01" value="0.12"></label>
+        <label class="ctl" for="iMove">Moving under load (A / servo)<input type="number" id="iMove" min="0" max="2" step="0.01" value="0.30"></label>
+        <label class="ctl" for="iStall">Stall (A / servo)<input type="number" id="iStall" min="0" max="3" step="0.01" value="0.70"></label>
+        <label class="ctl" for="iIdle">Idle, no load (A / servo)<input type="number" id="iIdle" min="0" max="1" step="0.01" value="0.01"></label>
+      </div>
+      <div class="grid2">
+        <label class="ctl" for="cells">Battery<select id="cells"><option value="2" selected>2S LiPo (7.4 V)</option><option value="3">3S LiPo (11.1 V)</option></select></label>
+        <label class="ctl" for="mah">Capacity (mAh)<input type="number" id="mah" min="100" max="5000" step="50" value="450"></label>
+      </div>
+      <label class="ctl" for="eff"><span class="row"><span>UBEC efficiency</span><output id="effOut">85%</output></span>
+        <input type="range" id="eff" min="60" max="95" step="1" value="85"></label>
+    </div>
+    <div class="stack">
+      <div class="tiles" id="powerTiles"></div>
+      <div class="charttitle">Total current by situation</div>
+      <div class="chart" id="powerChart"></div>
+      <p class="note">The dashed line is the recommended supply rating. The worst case sits above it on purpose: all servos stalling at once is rare, and the capacitor in section 04 covers short bursts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. WIRES ============ -->
+<section class="block" id="wires">
+  <div class="sec-head">
+    <div class="num">03 · WIRES &amp; CONNECTORS</div>
+    <h2>Every wire and contact is a small resistor</h2>
+    <p>Copper has resistance: <code>R = ρ × L ÷ A</code>. Thinner (higher AWG) and longer wire means more resistance. Current goes out on + and back on −, so use the round-trip length. Two checks matter: heat (ampacity) and voltage drop. On short runs, the connectors often matter more than the wire.</p>
+  </div>
+  <p class="inshort"><b>IN SHORT</b>Run 18 AWG wire, 20 cm or shorter, from the supply to the PCA9685 V+ screw terminal. Keep Dupont jumpers and breadboards out of the servo power path. They get hot and drop the voltage.</p>
+  <div class="formula">ΔV = I × (R_wire + R_contacts)       R_wire = Ω/m × (2 × one-way length)
+heat P = I² × R                       target: ΔV &lt; 0.15 V (3% of 5 V)</div>
+  <div class="cols">
+    <div class="stack">
+      <label class="ctl" for="wI"><span class="row"><span>Current</span><output id="wIOut">8.4 A</output></span>
+        <input type="range" id="wI" min="0.5" max="15" step="0.1" value="8.4"></label>
+      <div class="btns"><button type="button" id="wUseAvg">Use walking average</button><button type="button" id="wUseWorst">Use worst case</button></div>
+      <label class="ctl" for="wLen"><span class="row"><span>One-way length</span><output id="wLenOut">20 cm</output></span>
+        <input type="range" id="wLen" min="5" max="200" step="5" value="20"></label>
+      <div class="grid2">
+        <label class="ctl" for="wAwg">Wire gauge<select id="wAwg"></select></label>
+        <label class="ctl" for="wConn">Connector in the line<select id="wConn"></select></label>
+      </div>
+      <label class="ctl" for="wTerm">PCA9685 power input<select id="wTerm"></select></label>
+      <div class="tiles" id="wireTiles"></div>
+      <div class="msg" id="wireMsg" aria-live="polite"></div>
+    </div>
+    <div class="stack">
+      <div class="charttitle">Voltage drop by gauge at this current and length</div>
+      <div class="chart" id="wireChart"></div>
+      <details>
+        <summary>Table view</summary>
+        <div class="tablewrap"><table class="data" id="awgTable"></table></div>
+      </details>
+      <p class="note">Contact resistances are rough figures for a clean, tight connection. A loose screw terminal or a worn Dupont pin can be several times worse. Ampacity figures are conservative values for short runs of silicone wire.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. CAPACITOR ============ -->
+<section class="block" id="capacitor">
+  <div class="sec-head">
+    <div class="num">04 · CAPACITOR</div>
+    <h2>A small reservoir right next to the servos</h2>
+    <p>When servos start moving, current jumps within a fraction of a millisecond. The supply and the wiring cannot follow instantly, so the 5 V rail dips. A large electrolytic capacitor at the PCA9685 V+ terminal supplies the first moments of each burst and refills between them. It covers short peaks only; it cannot replace a supply that is too small.</p>
+  </div>
+  <p class="inshort"><b>IN SHORT</b>Put a 1000 µF (10 V or more) capacitor straight on the PCA9685 V+ terminal. The stripe marks the − leg. It stops the twitching and ESP32 resets you get when many servos start at once.</p>
+  <div class="formula">ΔV ≈ I × Δt ÷ C          e.g. 4 A for 0.1 ms on 2200 µF → 0.18 V
+rule of thumb: about 100 µF per servo → 12 servos ≈ 1000–2200 µF, rated 10 V or more</div>
+  <div class="cols">
+    <div class="stack">
+      <label class="ctl" for="cC">Capacitor on V+<select id="cC">
+        <option value="0">None (only ~10 µF on the board)</option>
+        <option value="470">470 µF</option>
+        <option value="1000" selected>1000 µF 10 V (the one you have)</option>
+        <option value="2000">2 × 1000 µF in parallel</option>
+        <option value="2200">2200 µF</option>
+        <option value="4700">4700 µF</option>
+      </select></label>
+      <div class="grid2">
+        <label class="ctl" for="cEsr">Capacitor type<select id="cEsr"><option value="0.08">Standard electrolytic</option><option value="0.03">Low-ESR electrolytic</option></select></label>
+        <label class="ctl" for="cSup">Supply response<select id="cSup"><option value="25">Slow (cheap adapter)</option><option value="10" selected>Typical bench supply</option><option value="4">Fast (good UBEC, short leads)</option></select></label>
+      </div>
+      <label class="ctl" for="cM"><span class="row"><span>Servos starting at the same moment</span><output id="cMOut">4</output></span>
+        <input type="range" id="cM" min="1" max="12" step="1" value="4"></label>
+      <label class="ctl" for="cLim"><span class="row"><span>Supply current limit</span><output id="cLimOut">6 A</output></span>
+        <input type="range" id="cLim" min="1" max="12" step="0.5" value="6"></label>
+      <p class="note" id="capWiring"></p>
+      <div class="tiles" id="capTiles"></div>
+      <div class="msg" id="capMsg" aria-live="polite"></div>
+    </div>
+    <div class="stack">
+      <div class="charttitle">Voltage at the PCA9685 V+ terminal</div>
+      <div class="legend" id="capLegendV"></div>
+      <div class="chart" id="capChartV"></div>
+      <div class="charttitle">Current</div>
+      <div class="legend" id="capLegendI"></div>
+      <div class="chart" id="capChartI"></div>
+      <p class="note">Simplified model: an ideal 5 V source behind resistance and inductance, three 50 Hz control ticks, each starting a burst on some servos. Real supplies have their own output capacitors, so real dips are usually smaller. Use it to compare choices, not to predict exact volts. Thresholds are approximate.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. BRING-UP ============ -->
+<section class="block" id="bringup">
+  <div class="sec-head">
+    <div class="num">05 · BRING-UP ORDER</div>
+    <h2>From bare servos to a trained policy</h2>
+    <p>Do these in order. Each step catches problems that would be hard to diagnose in the next one. Your ticks are saved in this browser only.</p>
+  </div>
+  <p class="inshort"><b>IN SHORT</b>Work down the list from top to bottom and tick each item. If a step fails, fix it before going on. A problem is easy to find at the step where it first appears.</p>
+  <div class="cols">
+    <ol class="bring" id="bring"></ol>
+    <div class="stack">
+      <h3>Joint limits from the model</h3>
+      <div class="tablewrap">
+        <table class="data">
+          <thead><tr><th>Joint</th><th>Sim range</th><th>Standing</th><th>+ direction</th></tr></thead>
+          <tbody>
+            <tr><td>*_1 roll, left legs</td><td>−6° … +18°</td><td>0°</td><td>foot to robot's left</td></tr>
+            <tr><td>*_1 roll, right legs</td><td>−18° … +6°</td><td>0°</td><td>foot to robot's left</td></tr>
+            <tr><td>*_2 hip pitch</td><td>−48° … +20°</td><td>−19.4°</td><td>thigh swings back</td></tr>
+            <tr><td>*_3 knee pitch</td><td>+5° … +85°</td><td>+42°</td><td>knee bends more</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>PCA9685 channels</h3>
+      <div class="tablewrap">
+        <table class="data">
+          <thead><tr><th>Leg</th><th>roll</th><th>hip</th><th>knee</th></tr></thead>
+          <tbody>
+            <tr><td>FL front-left</td><td>0</td><td>1</td><td>2</td></tr>
+            <tr><td>FR front-right</td><td>3</td><td>4</td><td>5</td></tr>
+            <tr><td>BL back-left</td><td>6</td><td>7</td><td>8</td></tr>
+            <tr><td>BR back-right</td><td>9</td><td>10</td><td>11</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note"><b>Power wiring summary:</b> 5 V supply rated 5–6 A → 18 AWG silicone (≤ 20 cm) with an XT30 → PCA9685 V+ screw terminal, 1000 µF 10 V capacitor at V+ (stripe = −), all grounds tied together, servo + never connected to the ESP32. No Dupont jumpers or breadboards in the power path.</p>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="wrap">Numbers for the MG90S Dog R1 design (MuJoCo model, 12 × MG90S). Servo currents and contact resistances are typical values, not measurements of your parts.</footer>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const DEG = Math.PI / 180;
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, d = 1) => (Math.round(v * 10 ** d) / 10 ** d).toFixed(d);
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgText(parent, x, y, str, attrs = {}) {
+  const t = el("text", { x, y, ...attrs }, parent);
+  t.textContent = str;
+  return t;
+}
+function chip(status, label) {
+  const s = document.createElement("span");
+  s.className = "chip " + status;
+  s.textContent = label;
+  return s;
+}
+
+/* ---------- tooltip ---------- */
+const tip = $("tip");
+function showTip(evt, title, rows) {
+  tip.replaceChildren();
+  const t = document.createElement("div"); t.className = "t"; t.textContent = title; tip.appendChild(t);
+  for (const r of rows) {
+    const d = document.createElement("div"); d.className = "r";
+    if (r.color) { const i = document.createElement("i"); i.style.borderColor = r.color; d.appendChild(i); }
+    const b = document.createElement("b"); b.textContent = r.value; d.appendChild(b);
+    const s = document.createElement("span"); s.textContent = r.label; d.appendChild(s);
+    tip.appendChild(d);
+  }
+  tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = evt.clientX + 14, y = evt.clientY - h - 10;
+  if (x + w > window.innerWidth - 8) x = evt.clientX - w - 14;
+  if (y < 8) y = evt.clientY + 16;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => { tip.hidden = true; };
+
+/* ---------- horizontal bar chart ---------- */
+function barChart(host, { items, ref, unit, digits = 1, maxHint = 0 }) {
+  host.replaceChildren();
+  const W = 600, rowH = 34, top = 8, left = 120, right = 70;
+  const H = top + items.length * rowH + 22;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" }, host);
+  const vmax = Math.max(maxHint, ref ? ref.value : 0, ...items.map((d) => d.value)) * 1.08 || 1;
+  const x = (v) => left + (v / vmax) * (W - left - right);
+  const g = el("g", { class: "grid" }, svg);
+  const step = niceStep(vmax / 4);
+  const ax = el("g", { class: "axis" }, svg);
+  for (let v = 0; v <= vmax + 1e-9; v += step) {
+    el("line", { x1: x(v), x2: x(v), y1: top - 2, y2: H - 20 }, g);
+    svgText(ax, x(v), H - 6, fmt(v, step < 1 ? (step < 0.1 ? 2 : 1) : 0), { "text-anchor": "middle" });
+  }
+  items.forEach((d, i) => {
+    const y = top + i * rowH + 7, h = rowH - 14;
+    svgText(svg, left - 10, y + h / 2 + 4, d.label, { "text-anchor": "end", class: "lab", style: d.highlight ? `fill:${css("--ink")};font-weight:600` : "" });
+    const x0 = x(0), x1 = Math.max(x(d.value), x0 + 1), r = Math.min(4, (x1 - x0) / 2);
+    const path = `M${x0},${y} H${x1 - r} Q${x1},${y} ${x1},${y + r} V${y + h - r} Q${x1},${y + h} ${x1 - r},${y + h} H${x0} Z`;
+    const color = d.status ? css("--" + d.status) : css("--series-1");
+    el("path", { d: path, fill: color, opacity: d.dim ? 0.45 : 1 }, svg);
+    svgText(svg, x1 + 6, y + h / 2 + 4, fmt(d.value, digits) + " " + unit, { class: "lab", style: `fill:${css("--ink-2")}` });
+    const hit = el("rect", { x: left, y: y - 5, width: W - left, height: h + 10, fill: "transparent" }, svg);
+    hit.addEventListener("pointermove", (e) => showTip(e, d.label, [{ value: fmt(d.value, digits + 1) + " " + unit, label: d.note || "", color }]));
+    hit.addEventListener("pointerleave", hideTip);
+  });
+  if (ref) {
+    const rg = el("g", { class: "ref" }, svg);
+    el("line", { x1: x(ref.value), x2: x(ref.value), y1: top - 4, y2: H - 20, stroke: css("--ink-2") }, rg);
+    svgText(rg, x(ref.value) + 4, top + 4, ref.label, { class: "reflab" });
+  }
+}
+function niceStep(raw) {
+  const p = 10 ** Math.floor(Math.log10(raw)), f = raw / p;
+  return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p;
+}
+
+/* ---------- line chart with crosshair ---------- */
+function lineChart(host, opts) {
+  const W = 620, H = 210, m = { l: 46, r: 14, t: 10, b: 26 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.aria }, host);
+  const layer = el("g", {}, svg);
+  const hover = el("g", {}, svg);
+  const overlay = el("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" }, svg);
+  let data = null;
+  const api = {
+    x: null, y: null,
+    draw(d) {
+      data = d; layer.replaceChildren(); hover.replaceChildren();
+      const [x0, x1] = d.xDomain, [y0, y1] = d.yDomain;
+      const X = (v) => m.l + ((v - x0) / (x1 - x0)) * (W - m.l - m.r);
+      const Y = (v) => m.t + (1 - (clamp(v, y0, y1) - y0) / (y1 - y0)) * (H - m.t - m.b);
+      api.x = X; api.y = Y;
+      const g = el("g", { class: "grid" }, layer), ax = el("g", { class: "axis" }, layer);
+      for (const v of d.yTicks) { el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v) }, g); svgText(ax, m.l - 6, Y(v) + 3.5, d.fmtY(v), { "text-anchor": "end" }); }
+      for (const v of d.xTicks) svgText(ax, X(v), H - 8, d.fmtX(v), { "text-anchor": "middle" });
+      for (const r of d.refs || []) {
+        const rg = el("g", { class: "ref" }, layer);
+        el("line", { x1: m.l, x2: W - m.r, y1: Y(r.y), y2: Y(r.y), stroke: css("--" + r.status) }, rg);
+        el("circle", { cx: m.l + 8, cy: Y(r.y) - 7, r: 3.5, fill: css("--" + r.status) }, rg);
+        svgText(rg, m.l + 15, Y(r.y) - 3.5, r.label, { class: "reflab" });
+      }
+      for (const s of d.series) {
+        const pts = s.points.map((p) => X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join(" ");
+        el("polyline", { points: pts, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-dasharray": s.dash ? "5 4" : "none", opacity: s.dash ? 0.9 : 1 }, layer);
+      }
+    },
+    showAt(i, evt) {
+      hover.replaceChildren();
+      if (!data) return;
+      const xv = data.series[0].points[i][0];
+      el("line", { x1: api.x(xv), x2: api.x(xv), y1: m.t, y2: H - m.b, stroke: css("--muted"), "stroke-width": 1 }, hover);
+      for (const s of data.series) el("circle", { cx: api.x(xv), cy: api.y(s.points[i][1]), r: 4.5, fill: s.color, stroke: css("--panel"), "stroke-width": 2 }, hover);
+      if (evt) showTip(evt, data.fmtX(xv, true), data.series.map((s) => ({ color: s.color, value: data.fmtY(s.points[i][1], true), label: s.name })));
+    },
+    clear() { hover.replaceChildren(); },
+  };
+  overlay.addEventListener("pointermove", (e) => {
+    if (!data) return;
+    const rect = svg.getBoundingClientRect();
+    const vx = ((e.clientX - rect.left) / rect.width) * W;
+    const n = data.series[0].points.length;
+    const i = clamp(Math.round(((vx - m.l) / (W - m.l - m.r)) * (n - 1)), 0, n - 1);
+    opts.onHover ? opts.onHover(i, e) : api.showAt(i, e);
+  });
+  overlay.addEventListener("pointerleave", () => { hideTip(); opts.onLeave ? opts.onLeave() : api.clear(); });
+  return api;
+}
+function legend(host, items) {
+  host.replaceChildren();
+  for (const it of items) {
+    const s = document.createElement("span"), i = document.createElement("i");
+    i.style.borderColor = it.color; if (it.dash) i.className = "dash";
+    s.appendChild(i); s.appendChild(document.createTextNode(it.label)); host.appendChild(s);
+  }
+}
+
+/* =========================================================
+   1. CALIBRATION
+   ========================================================= */
+const JOINTS = {
+  roll: { id: "fl_1", stand: 0, simMin: -6, simMax: 18, ref: 15, hard: [-14, 26],
+          plus: "foot moves outward, away from the body", standTxt: "shoulder bracket square to the body, leg straight down",
+          measure: "How to measure: look from the front and hold the phone flat against the shoulder bracket. 0° = vertical. On the right legs calibrate.py asks for −15°. That is also outward, because the right side is mirrored." },
+  hip: { id: "fl_2", stand: -19.4, simMin: -48, simMax: 20, ref: 30, hard: [-62, 34],
+         plus: "thigh swings backward (foot toward the tail)", standTxt: "thigh tilted about 19° forward of vertical",
+         measure: "How to measure: look from the side and lay the phone along the thigh. Standing = thigh leaning 19.4° toward the front. Reference = 10.6° leaning toward the tail." },
+  knee: { id: "fl_3", stand: 42, simMin: 5, simMax: 85, ref: 30, hard: [-2, 104],
+          plus: "knee bends more (shank folds back)", standTxt: "42° bend between thigh and shank, foot under the hip",
+          measure: "How to measure: the knee angle is the bend between thigh and shank (0° = straight). Using a phone, measure the shank's tilt and subtract the thigh's. In the standing pose the shank leans 22.6° toward the tail." },
+};
+const toothDeg = () => 360 / +$("teeth").value;
+const S = { joint: "hip", mode: "cal", us: 1500, qsim: -19.4, servo: {}, cal: {}, marks: {}, saved: {} };
+
+function randomServo() {
+  return {
+    dir: Math.random() < 0.5 ? 1 : -1,
+    kRad: 570 + Math.random() * 60,                  // µs per rad
+    tooth: [-1, 0, 0, 1][Math.floor(Math.random() * 4)],
+    fine: (Math.random() * 2 - 1) * 5,               // degrees, error inside one tooth
+  };
+}
+function resetCal() { S.cal = { center: null, dir: null, k: null, min: null, max: null }; S.marks = {}; }
+function jointNow() { return JOINTS[S.joint]; }
+function servoAngle(us) {   // commanded (unblocked) joint angle, degrees
+  const J = jointNow(), sv = S.servo[S.joint];
+  const q1500 = J.stand + sv.tooth * toothDeg() + sv.fine;
+  return q1500 + (sv.dir * (us - 1500)) / sv.kRad / DEG;
+}
+function realAngle(us) {
+  const J = jointNow(), qc = servoAngle(us);
+  const q = clamp(qc, J.hard[0], J.hard[1]);
+  return { q, stalled: Math.abs(qc - q) > 0.5, over: qc - q };
+}
+const measured = (q) => Math.round(q * 2) / 2;
+const calComplete = () => ["center", "dir", "k", "min", "max"].every((k) => S.cal[k] != null);
+function calToUs(qdeg) {
+  const J = jointNow(), c = S.cal;
+  const us = c.center + c.dir * c.k * (qdeg - J.stand) * DEG;
+  return { us: clamp(Math.round(us), c.min, c.max), raw: us };
+}
+function currentStep() {
+  if (S.cal.center == null) return 0;
+  if (S.cal.k == null) return 1;
+  if (S.marks.A == null) return 2;
+  if (S.marks.B == null) return 3;
+  return 4;
+}
+
+function drawLeg() {
+  const svg = $("legSvg"); svg.replaceChildren();
+  const J = jointNow(), sc = 2.3, hy = 112;
+  const ink = css("--ink"), line = css("--line"), accent = css("--accent"), servo = css("--servo"), muted = css("--muted"), crit = css("--critical");
+  const small = `fill:${muted};font-family:var(--f-mono);font-size:11px`;
+
+  // active joint: real angle and where the simulator wants it (target)
+  let usNow, target = null;
+  if (S.mode === "cal") {
+    usNow = S.us;
+    const st = currentStep();
+    target = st === 0 ? J.stand : st === 1 ? J.stand + J.ref : null;
+  } else {
+    usNow = calToUs(S.qsim).us;
+    target = S.qsim;
+  }
+  const { q, stalled } = realAngle(usNow);
+
+  // ground
+  const groundY = hy + 81.6 * sc, rollY = hy - 37 * sc;
+  el("line", { x1: 10, x2: 370, y1: groundY, y2: groundY, stroke: muted, "stroke-width": 1.5 }, svg);
+  for (let gx = 16; gx < 370; gx += 14) el("line", { x1: gx, x2: gx - 8, y1: groundY + 1, y2: groundY + 9, stroke: line, "stroke-width": 1 }, svg);
+
+  // leg geometry: returns joint points from the top pivot to the foot
+  let legPts, activeAt;
+  if (S.joint === "roll") {
+    // front view, looking at the robot's face: robot's left is on the viewer's right
+    const px = 150;
+    const rot = (dx, dy, a) => [dx * Math.cos(a * DEG) + dy * Math.sin(a * DEG), -dx * Math.sin(a * DEG) + dy * Math.cos(a * DEG)];
+    legPts = (a) => {
+      const [bx, by] = rot(16 * sc, 0, a), [hx2, hy2] = rot(16 * sc, 37 * sc, a), [fx, fy] = rot(16 * sc, (37 + 76.6) * sc, a);
+      return [[px, rollY], [px + bx, rollY + by], [px + hx2, rollY + hy2], [px + fx, rollY + fy]];
+    };
+    el("rect", { x: 8, y: rollY - 10, width: px - 8, height: 20, rx: 3, fill: line }, svg);
+    svgText(svg, 14, rollY - 16, "body (front view)", { style: small });
+    svgText(svg, 262, rollY - 16, "robot's left →", { style: small });
+    activeAt = (pts) => pts[0];
+  } else {
+    const hx = 205;
+    legPts = (a) => {
+      const h = S.joint === "hip" ? a : JOINTS.hip.stand, k = S.joint === "knee" ? a : JOINTS.knee.stand;
+      const kx = hx - 44 * sc * Math.sin(h * DEG), ky = hy + 44 * sc * Math.cos(h * DEG);
+      const fx = kx - 38 * sc * Math.sin((h + k) * DEG), fy = ky + 38 * sc * Math.cos((h + k) * DEG);
+      return [[hx, hy], [kx, ky], [fx, fy]];
+    };
+    el("rect", { x: 8, y: rollY - 10, width: hx + 4 * sc - 8, height: 14, rx: 3, fill: line }, svg);
+    el("line", { x1: hx, x2: hx, y1: rollY, y2: hy, stroke: line, "stroke-width": 8, "stroke-linecap": "round" }, svg);
+    svgText(svg, 14, rollY - 16, "body (side view)", { style: small });
+    svgText(svg, 300, rollY - 16, "front →", { style: small });
+    activeAt = (pts) => (S.joint === "hip" ? pts[0] : pts[1]);
+  }
+
+  // ghost (simulator pose)
+  if (target != null) {
+    const g = legPts(target), f = g[g.length - 1];
+    el("polyline", { points: g.map((pt) => pt.join(",")).join(" "), fill: "none", stroke: accent, "stroke-width": 3, "stroke-dasharray": "6 5", "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.9 }, svg);
+    el("circle", { cx: f[0], cy: f[1], r: 5 * sc, fill: "none", stroke: accent, "stroke-dasharray": "4 4", "stroke-width": 1.5 }, svg);
+  }
+  // real leg
+  const pts = legPts(q), foot = pts[pts.length - 1];
+  for (let i = 0; i + 1 < pts.length; i++) {
+    el("line", { x1: pts[i][0], y1: pts[i][1], x2: pts[i + 1][0], y2: pts[i + 1][1], stroke: ink, "stroke-width": i === pts.length - 2 ? 7 : 9, "stroke-linecap": "round" }, svg);
+  }
+  el("circle", { cx: foot[0], cy: foot[1], r: 5 * sc, fill: ink }, svg);
+  // servos: the active one is solid (red while stalling)
+  const servoAt = S.joint === "roll" ? [[pts[0], true]] : [[pts[0], S.joint === "hip"], [pts[1], S.joint === "knee"]];
+  for (const [[cx, cy], active] of servoAt) {
+    el("rect", { x: cx - 13, y: cy - 13, width: 26, height: 26, rx: 4, fill: stalled && active ? crit : servo, opacity: active ? 1 : 0.55 }, svg);
+    el("circle", { cx, cy, r: 5.5, fill: css("--panel") }, svg);
+    el("circle", { cx, cy, r: 2, fill: servo }, svg);
+  }
+  const [ax, ay] = activeAt(pts);
+  const deg = (v) => (v >= 0 ? "+" : "−") + fmt(Math.abs(v), 1) + "°";
+  svgText(svg, ax + 20, ay - 16, deg(measured(q)), { style: `fill:${ink};font-family:var(--f-mono);font-size:14px;font-weight:500` });
+  if (stalled) svgText(svg, ax + 20, ay + 2, "STALL", { style: `fill:${crit};font-family:var(--f-mono);font-size:12px;font-weight:600` });
+  svgText(svg, 14, 322, `pulse ${usNow} µs`, { style: small });
+  if (target != null) svgText(svg, 250, 322, "- - simulator pose", { style: `fill:${accent};font-family:var(--f-mono);font-size:11px` });
+
+  // readouts
+  $("rMeas").textContent = deg(measured(q));
+  $("rTarget").textContent = target == null ? "—" : deg(target);
+  $("rState").replaceChildren(stalled ? chip("critical", "stall ~0.7 A") : chip("good", "free"));
+  return { q, stalled, usNow, target };
+}
+
+function renderCalTable() {
+  const J = jointNow(), c = S.cal, sv = S.servo[S.joint];
+  const center1500 = J.stand + sv.tooth * toothDeg() + sv.fine;
+  const trueCenter = Math.round(1500 + ((J.stand - center1500) * DEG * sv.kRad) / sv.dir);
+  const rows = [
+    ["zero_rad", fmt(J.stand * DEG, 4) + " (" + J.stand + "°)", "standing pose"],
+    ["center_us", c.center ?? "—", trueCenter + " µs"],
+    ["direction", c.dir ?? "—", sv.dir > 0 ? "+1" : "−1"],
+    ["us_per_rad", c.k != null ? fmt(c.k, 1) : "—", fmt(sv.kRad, 1)],
+    ["min_us", c.min ?? "—", ""],
+    ["max_us", c.max ?? "—", ""],
+  ];
+  const tb = $("calTable"); tb.replaceChildren();
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    for (const v of r) { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); }
+    tb.appendChild(tr);
+  }
+}
+
+function renderCal() {
+  const J = jointNow();
+  $("jRoll").setAttribute("aria-pressed", S.joint === "roll");
+  $("jHip").setAttribute("aria-pressed", S.joint === "hip");
+  $("jKnee").setAttribute("aria-pressed", S.joint === "knee");
+  $("mCal").setAttribute("aria-pressed", S.mode === "cal");
+  $("mVer").setAttribute("aria-pressed", S.mode === "ver");
+  $("calPanel").hidden = S.mode !== "cal";
+  $("verPanel").hidden = S.mode !== "ver";
+  $("mVer").disabled = !calComplete();
+  $("refTxt").textContent = "+" + J.ref + "°";
+  $("plusTxt").innerHTML = "";
+  $("plusTxt").append("Standing pose: " + J.standTxt + ". The + direction: " + J.plus + ".");
+  $("measureNote").textContent = J.measure;
+  $("viewNote").textContent = "Measured angle is what a phone inclinometer would read, rounded to 0.5°. " +
+    (S.joint === "roll" ? "Front view: you are looking at the robot's face, so its left is on your right." : "Side view: the front of the robot is to the right.");
+  $("pulse").value = S.us; $("pulseOut").textContent = S.us + " µs";
+  const st = currentStep();
+  document.querySelectorAll("#calSteps li").forEach((li) => {
+    const n = +li.dataset.step;
+    li.className = n < st ? "done" : n === st ? "current" : "";
+  });
+  $("markRef").disabled = S.cal.center == null;
+  const q = $("qsim"); q.min = J.simMin; q.max = J.simMax;
+  S.qsim = clamp(S.qsim, J.simMin, J.simMax); q.value = S.qsim;
+  $("qsimOut").textContent = fmt(S.qsim, 1) + "°";
+  // live formula
+  const c = S.cal;
+  const f = $("calFormula");
+  f.replaceChildren();
+  if (calComplete()) {
+    const u = calToUs(S.mode === "ver" ? S.qsim : J.stand);
+    f.append("us = ");
+    const s = document.createElement("span"); s.className = "hl";
+    s.textContent = `${c.center} + (${c.dir > 0 ? "+1" : "−1"}) × ${fmt(c.k, 1)} × (${fmt((S.mode === "ver" ? S.qsim : J.stand) * DEG, 3)} − ${fmt(J.stand * DEG, 3)})`;
+    f.append(s, ` = ${Math.round(u.raw)}  → clamp [${c.min}, ${c.max}] → ${u.us} µs`);
+  } else {
+    f.append("us = center_us + direction × us_per_rad × (q − zero_rad)      then clamp to [min_us, max_us]");
+  }
+  const r = drawLeg();
+  renderCalTable();
+  if (S.mode === "cal") renderHint(r);
+  if (S.mode === "ver") {
+    const err = r.q - S.qsim, a = Math.abs(err);
+    const m = $("verMsg"); m.replaceChildren();
+    m.append(a < 1.5 ? chip("good", "match") : a < 4 ? chip("warning", "off a little") : chip("critical", "mismatch"));
+    m.append(`  real ${fmt(r.q, 1)}° vs sim ${fmt(S.qsim, 1)}° (error ${err >= 0 ? "+" : "−"}${fmt(a, 1)}°)`);
+    const u = calToUs(S.qsim);
+    if (u.raw < c.min || u.raw > c.max) m.append(". Pulse clamped at the physical limit.");
+  }
+}
+function renderHint(r) {
+  const h = $("calHint"); h.replaceChildren();
+  const big = (t) => { const b = document.createElement("span"); b.className = "big"; b.textContent = t; return b; };
+  if (r.stalled) {
+    h.append(chip("critical", "stall"), "  The leg is pushing against something. Move the pulse back the other way now.");
+    return;
+  }
+  if (r.target != null) {
+    const gap = r.target - measured(r.q);
+    h.append("Target ", big(fmt(r.target, 1) + "°"), " · leg reads ", big(fmt(measured(r.q), 1) + "°"), " · ");
+    if (Math.abs(gap) <= 0.5) h.append(chip("good", "on target"), `  Press ${currentStep() === 0 ? "Mark center" : "Mark reference"}.`);
+    else h.append(big(fmt(Math.abs(gap), 1) + "° to go"), ". Nudge ±10 µs. If the gap grows, go the other way. Finish with ±2 µs.");
+    return;
+  }
+  if (currentStep() < 4) {
+    h.append("Leg reads ", big(fmt(measured(r.q), 1) + "°"), ". Move slowly toward one end. When STALL appears, it has touched. Back off 30–50 µs (3–5°) and mark there.");
+    return;
+  }
+  h.append(chip("good", "done"), "  All four marks set. Switch to 2 · Verify and press Sweep.");
+}
+function calMsg(status, text) {
+  const m = $("calMsg"); m.replaceChildren();
+  if (status) m.append(chip(status, { good: "ok", warning: "check", critical: "problem" }[status]), "  ");
+  m.append(text);
+}
+function setUs(v) { S.us = clamp(Math.round(v), 500, 2500); renderCal(); }
+$("pulse").addEventListener("input", (e) => setUs(+e.target.value));
+document.querySelectorAll("[data-nudge]").forEach((b) => b.addEventListener("click", () => setUs(S.us + +b.dataset.nudge)));
+$("markCenter").addEventListener("click", () => {
+  const J = jointNow(), r = realAngle(S.us), err = measured(r.q) - J.stand;
+  resetCal();
+  S.cal.center = S.us;
+  if (Math.abs(err) > 2) calMsg("warning", `Center saved at ${S.us} µs, but the leg reads ${fmt(measured(r.q), 1)}° instead of ${J.stand}°. Everything after this will be offset by ${fmt(err, 1)}°.`);
+  else calMsg("good", `Center saved at ${S.us} µs (${fmt(measured(r.q), 1)}°). ${Math.abs(S.us - 1500) > 150 ? "It is far from 1500 µs; consider re-seating the horn." : ""}`);
+  renderCal();
+});
+$("markRef").addEventListener("click", () => {
+  const J = jointNow(), d = S.us - S.cal.center;
+  if (Math.abs(d) < 50) { calMsg("warning", "The pulse is almost the same as center. Rotate the leg the full reference angle first."); return; }
+  const slope = d / (J.ref * DEG);
+  S.cal.dir = slope > 0 ? 1 : -1; S.cal.k = Math.abs(slope);
+  const actual = measured(realAngle(S.us).q) - J.stand;
+  let text = `direction = ${S.cal.dir > 0 ? "+1" : "−1"}, us_per_rad = ${fmt(S.cal.k, 1)} (${fmt(S.cal.k * DEG, 2)} µs/deg).`;
+  if (Math.abs(actual - J.ref) > 2) calMsg("warning", text + ` The leg actually moved ${fmt(actual, 1)}°, not ${J.ref}°, so this slope is off.`);
+  else if (S.cal.k < 450 || S.cal.k > 800) calMsg("warning", text + " That is outside the usual MG90S range (570–630).");
+  else calMsg("good", text);
+  renderCal();
+});
+function markLimit(key) {
+  if (S.cal.k == null) { calMsg("warning", "Mark center and reference first."); return; }
+  const r = realAngle(S.us);
+  S.marks[key] = S.us;
+  if (r.stalled) calMsg("critical", `Limit ${key} saved at ${S.us} µs, but the servo is pushing against the hard stop there. Back off a few degrees so it is not stalling.`);
+  else calMsg("good", `Limit ${key} saved at ${S.us} µs (${fmt(measured(r.q), 1)}°).`);
+  if (S.marks.A != null && S.marks.B != null) {
+    S.cal.min = Math.min(S.marks.A, S.marks.B); S.cal.max = Math.max(S.marks.A, S.marks.B);
+    const J = jointNow(), c = S.cal;
+    const ends = [J.simMin, J.simMax].map((q) => c.center + c.dir * c.k * (q - J.stand) * DEG).sort((a, b) => a - b);
+    if (ends[0] < c.min - 1 || ends[1] > c.max + 1)
+      calMsg("warning", `The simulator range needs ${Math.round(ends[0])}–${Math.round(ends[1])} µs, but the safe range is ${c.min}–${c.max} µs. The real leg will be clamped. Try Verify to see where.`);
+    else calMsg("good", `Calibration complete. The simulator range (${Math.round(ends[0])}–${Math.round(ends[1])} µs) fits inside ${c.min}–${c.max} µs. Switch to Verify.`);
+  }
+  renderCal();
+}
+$("markA").addEventListener("click", () => markLimit("A"));
+$("markB").addEventListener("click", () => markLimit("B"));
+function reseat(d) {
+  S.servo[S.joint].tooth += d; resetCal(); S.mode = "cal";
+  calMsg("warning", `Horn moved one tooth (${d > 0 ? "+" : "−"}${fmt(toothDeg(), 1)}°). Old marks cleared. Start again at step 1.`);
+  renderCal();
+}
+$("reseatL").addEventListener("click", () => reseat(-1));
+$("reseatR").addEventListener("click", () => reseat(1));
+$("newServo").addEventListener("click", () => {
+  S.servo[S.joint] = randomServo(); resetCal(); S.mode = "cal"; S.us = 1500;
+  calMsg(null, "New servo installed with unknown direction, slope and horn position. Calibrate from step 1.");
+  renderCal();
+});
+function selectJoint(j) {
+  if (S.joint === j) return;
+  S.saved[S.joint] = { cal: S.cal, marks: S.marks, us: S.us };
+  S.joint = j; S.mode = "cal"; S.qsim = JOINTS[j].stand;
+  const prev = S.saved[j];
+  if (prev) { S.cal = prev.cal; S.marks = prev.marks; S.us = prev.us; calMsg(null, `Back on the ${j} servo. Your marks for it are kept.`); }
+  else { resetCal(); S.us = 1500; calMsg(null, `Bench switched to the ${j} servo. Each servo needs its own calibration.`); }
+  renderCal();
+}
+$("jRoll").addEventListener("click", () => selectJoint("roll"));
+$("jHip").addEventListener("click", () => selectJoint("hip"));
+$("jKnee").addEventListener("click", () => selectJoint("knee"));
+$("mCal").addEventListener("click", () => { S.mode = "cal"; renderCal(); });
+$("mVer").addEventListener("click", () => { if (calComplete()) { S.mode = "ver"; S.qsim = jointNow().stand; renderCal(); } });
+$("qsim").addEventListener("input", (e) => { S.qsim = +e.target.value; renderCal(); });
+let sweepTimer = null;
+$("sweep").addEventListener("click", () => {
+  if (sweepTimer) return;
+  const J = jointNow(), path = [J.simMin, J.simMax, J.stand];
+  let leg = 0;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  sweepTimer = setInterval(() => {
+    const target = path[leg], stepDeg = reduce ? 100 : 1.2;
+    S.qsim += clamp(target - S.qsim, -stepDeg, stepDeg);
+    if (Math.abs(target - S.qsim) < 1e-6) leg++;
+    renderCal();
+    if (leg >= path.length) { clearInterval(sweepTimer); sweepTimer = null; }
+  }, 30);
+});
+$("teeth").addEventListener("input", () => {
+  resetCal(); S.mode = "cal"; S.saved = {};
+  calMsg("warning", `Tooth size is now ${fmt(toothDeg(), 1)}°. Marks cleared. Start again at step 1.`);
+  renderCal();
+});
+S.servo = { roll: randomServo(), hip: randomServo(), knee: randomServo() };
+resetCal();
+
+/* =========================================================
+   2. POWER
+   ========================================================= */
+const P = {};
+function readPower() {
+  P.n = +$("nServo").value;
+  P.hold = +$("iHold").value || 0; P.move = +$("iMove").value || 0;
+  P.stall = +$("iStall").value || 0; P.idle = +$("iIdle").value || 0;
+  P.cells = +$("cells").value; P.mah = +$("mah").value || 0; P.eff = +$("eff").value / 100;
+  P.idleT = P.n * P.idle; P.standT = P.n * P.hold; P.walkT = P.n * P.move; P.worstT = P.n * P.stall;
+  P.rec = Math.ceil(Math.max(P.walkT * 1.5, P.worstT * 0.6) * 2) / 2;
+  const wh = (P.mah / 1000) * 3.7 * P.cells;
+  P.watts = 5 * P.walkT;
+  P.runtime = P.watts > 0 ? ((wh * P.eff) / P.watts) * 60 : 0;
+  P.wh = wh;
+}
+function tile(host, k, v, unit, s, key) {
+  const d = document.createElement("div"); d.className = "tile" + (key ? " key" : "");
+  const a = document.createElement("div"); a.className = "k"; a.textContent = k;
+  const b = document.createElement("div"); b.className = "v"; b.textContent = v;
+  if (unit) { const sm = document.createElement("small"); sm.textContent = unit; b.appendChild(sm); }
+  d.append(a, b);
+  if (s) { const c = document.createElement("div"); c.className = "s"; c.textContent = s; d.appendChild(c); }
+  host.appendChild(d);
+}
+function renderPower() {
+  readPower();
+  $("nServoOut").textContent = P.n; $("effOut").textContent = Math.round(P.eff * 100) + "%";
+  const t = $("powerTiles"); t.replaceChildren();
+  tile(t, "Standing", fmt(P.standT, 1), "A", `${P.n} × ${fmt(P.hold, 2)} A`);
+  tile(t, "Walking average", fmt(P.walkT, 1), "A", `${P.n} × ${fmt(P.move, 2)} A`);
+  tile(t, "Worst case", fmt(P.worstT, 1), "A", `${P.n} × ${fmt(P.stall, 2)} A`);
+  tile(t, "Supply rating", fmt(P.rec, 1), "A", "5 V, continuous", true);
+  tile(t, "Walking power", fmt(P.watts, 1), "W", "P = 5 V × I");
+  tile(t, "Battery runtime", P.runtime ? fmt(P.runtime, 0) : "—", "min", `${P.cells}S ${P.mah} mAh = ${fmt(P.wh, 1)} Wh`);
+  barChart($("powerChart"), {
+    unit: "A",
+    ref: { value: P.rec, label: `supply ${fmt(P.rec, 1)} A` },
+    items: [
+      { label: "Idle", value: P.idleT, note: "servos powered, no load" },
+      { label: "Standing", value: P.standT, note: "holding body weight" },
+      { label: "Walking avg", value: P.walkT, note: "average while walking", highlight: true },
+      { label: "Worst case", value: P.worstT, note: "every servo stalled", status: P.worstT > P.rec ? "serious" : null },
+    ],
+  });
+  renderWires(); renderCap();
+}
+["nServo", "iHold", "iMove", "iStall", "iIdle", "cells", "mah", "eff"].forEach((id) => $(id).addEventListener("input", renderPower));
+
+/* =========================================================
+   3. WIRES
+   ========================================================= */
+const AWG = [
+  { g: 14, r: 0.00829, amp: 18 }, { g: 16, r: 0.0132, amp: 13 }, { g: 18, r: 0.0210, amp: 8 },
+  { g: 20, r: 0.0333, amp: 5 }, { g: 22, r: 0.0530, amp: 3 }, { g: 24, r: 0.0842, amp: 2 }, { g: 26, r: 0.134, amp: 1 },
+];
+const CONN = [
+  { id: "solder", name: "Soldered splice", r: 0.0003, amp: 30 },
+  { id: "xt30", name: "XT30 connector", r: 0.0008, amp: 15 },
+  { id: "screw", name: "Screw terminal", r: 0.005, amp: 10 },
+  { id: "dupont", name: "Dupont jumper pin", r: 0.02, amp: 3 },
+  { id: "bread", name: "Breadboard rail", r: 0.03, amp: 1 },
+];
+const TERM = [
+  { id: "screw", name: "Screw terminal (tight)", r: 0.005, amp: 10 },
+  { id: "dupont", name: "Dupont header pins", r: 0.02, amp: 3 },
+  { id: "solder", name: "Soldered directly", r: 0.0003, amp: 30 },
+];
+AWG.forEach((a) => $("wAwg").add(new Option(a.g + " AWG", a.g, false, a.g === 18)));
+CONN.forEach((c) => $("wConn").add(new Option(c.name, c.id, false, c.id === "xt30")));
+TERM.forEach((c) => $("wTerm").add(new Option(c.name, c.id, false, c.id === "screw")));
+const W = {};
+function wirePath(awg, I, lenM, conn, term) {
+  const rw = awg.r * 2 * lenM, rc = 2 * conn.r + 2 * term.r;
+  return { rw, rc, R: rw + rc, dv: I * (rw + rc), heatW: I * I * rw, heatC: I * I * conn.r, heatT: I * I * term.r };
+}
+function renderWires() {
+  const I = +$("wI").value, lenM = +$("wLen").value / 100;
+  const awg = AWG.find((a) => a.g === +$("wAwg").value);
+  const conn = CONN.find((c) => c.id === $("wConn").value), term = TERM.find((c) => c.id === $("wTerm").value);
+  $("wIOut").textContent = fmt(I, 1) + " A"; $("wLenOut").textContent = $("wLen").value + " cm";
+  const r = wirePath(awg, I, lenM, conn, term);
+  Object.assign(W, { R: r.R });
+  const t = $("wireTiles"); t.replaceChildren();
+  tile(t, "Voltage drop", fmt(r.dv, 2), "V", `wire ${fmt(I * r.rw, 2)} + contacts ${fmt(I * r.rc, 2)}`, true);
+  tile(t, "At the servos", fmt(5 - r.dv, 2), "V", "from a 5.00 V supply");
+  tile(t, "Path resistance", fmt(r.R * 1000, 1), "mΩ", `wire ${fmt(r.rw * 1000, 1)} · contacts ${fmt(r.rc * 1000, 1)}`);
+  const m = $("wireMsg"); m.replaceChildren();
+  const problems = [];
+  if (I > awg.amp) problems.push(["critical", `${awg.g} AWG is rated about ${awg.amp} A here; ${fmt(I, 1)} A will heat it.`]);
+  if (I > conn.amp) problems.push(["critical", `${conn.name} is not meant for ${fmt(I, 1)} A (≈${fmt(r.heatC, 2)} W in each contact).`]);
+  if (I > term.amp) problems.push(["critical", `${term.name} at ${fmt(I, 1)} A: ≈${fmt(r.heatT, 2)} W per contact, pins get hot.`]);
+  if (r.dv >= 0.3) problems.push(["serious", "Drop over 0.3 V: servos lose torque and the ESP32 may reset."]);
+  else if (r.dv >= 0.15) problems.push(["warning", "Drop between 0.15 and 0.3 V: usable, but shorten the run or go one gauge thicker."]);
+  if (!problems.length) m.append(chip("good", "ok"), `  Drop ${fmt(r.dv, 2)} V, wire heat ${fmt(r.heatW, 2)} W spread over ${fmt(lenM * 200, 0)} cm of copper.`);
+  else { const [s, txt] = problems[0]; m.append(chip(s, s === "warning" ? "check" : "problem"), "  " + txt + (problems.length > 1 ? ` (+${problems.length - 1} more)` : "")); }
+  // chart
+  const items = AWG.map((a) => {
+    const p = wirePath(a, I, lenM, conn, term);
+    const status = I > a.amp ? "critical" : p.dv >= 0.3 ? "serious" : p.dv >= 0.15 ? "warning" : null;
+    return { label: a.g + " AWG", value: p.dv, highlight: a.g === awg.g, dim: a.g !== awg.g, status, note: I > a.amp ? `over its ~${a.amp} A rating` : `wire ${fmt(I * p.rw, 3)} V + contacts ${fmt(I * p.rc, 3)} V` };
+  });
+  barChart($("wireChart"), { items, unit: "V", digits: 2, ref: { value: 0.15, label: "0.15 V target" } });
+  // table
+  const tb = $("awgTable"); tb.replaceChildren();
+  const hr = document.createElement("tr");
+  ["Gauge", "Ω per m", "~Ampacity", "ΔV here", "Wire heat"].forEach((h) => { const th = document.createElement("th"); th.textContent = h; hr.appendChild(th); });
+  tb.appendChild(hr);
+  AWG.forEach((a) => {
+    const p = wirePath(a, I, lenM, conn, term), tr = document.createElement("tr");
+    if (a.g === awg.g) tr.className = "sel";
+    [a.g + " AWG", fmt(a.r, 4), a.amp + " A", fmt(p.dv, 3) + " V", fmt(p.heatW, 2) + " W"].forEach((v) => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+  renderCap();
+}
+["wI", "wLen", "wAwg", "wConn", "wTerm"].forEach((id) => $(id).addEventListener("input", renderWires));
+$("wUseAvg").addEventListener("click", () => { $("wI").value = fmt(P.walkT, 1); renderWires(); });
+$("wUseWorst").addEventListener("click", () => { $("wI").value = fmt(Math.min(15, P.worstT), 1); renderWires(); });
+
+/* =========================================================
+   4. CAPACITOR (time-domain sim, 1 µs steps)
+   ========================================================= */
+function simulate({ C_uF, esr, L_uH, Rpath, Ilim, n, m, iHold, iMove, iPeak }) {
+  const dt = 1e-6, T = 0.06, steps = Math.round(T / dt), every = 100;
+  const Vs = 5, R = Rpath + 0.01;             // + supply's own output resistance
+  const C = (C_uF + 10) * 1e-6;               // board already has ~10 µF
+  const ESR = C_uF > 0 ? esr * Math.sqrt(1000 / C_uF) : 0.1;
+  const L = L_uH * 1e-6;
+  const ticks = [0.005, 0.025, 0.045], rise = 50e-6, tau = 0.002, burst = 0.012;
+  const load = (t) => {
+    let i = n * iHold;
+    for (const t0 of ticks) {
+      const d = t - t0;
+      if (d >= 0 && d < burst) {
+        const per = d < rise ? iHold + ((iPeak - iHold) * d) / rise : iMove + (iPeak - iMove) * Math.exp(-(d - rise) / tau);
+        i += m * (per - iHold);
+      }
+    }
+    return i;
+  };
+  let is = Math.min(n * iHold, Ilim), vc = Vs - R * is, vmin = Infinity, tmin = 0;
+  const V = [], IL = [], IS = [];
+  for (let k = 0; k <= steps; k++) {
+    const t = k * dt, il = load(t);
+    is += ((Vs - vc - (R + ESR) * is + ESR * il) / L) * dt;
+    is = clamp(is, 0, Ilim);
+    vc = Math.max(0, vc + ((is - il) / C) * dt);
+    const vn = Math.max(0, vc + ESR * (is - il));
+    if (vn < vmin) { vmin = vn; tmin = t; }
+    if (k % every === 0) { V.push([t * 1000, vn]); IL.push([t * 1000, il]); IS.push([t * 1000, is]); }
+  }
+  return { V, IL, IS, vmin, tmin };
+}
+const capV = lineChart($("capChartV"), { aria: "Rail voltage over time", onHover: (i, e) => { capV.showAt(i, e); capI.showAt(i); }, onLeave: () => { capV.clear(); capI.clear(); } });
+const capI = lineChart($("capChartI"), { aria: "Load and supply current over time", onHover: (i, e) => { capI.showAt(i, e); capV.showAt(i); }, onLeave: () => { capV.clear(); capI.clear(); } });
+let capQueued = false;
+function renderCap() {
+  if (capQueued) return;
+  capQueued = true;
+  requestAnimationFrame(() => { capQueued = false; drawCap(); });
+}
+function drawCap() {
+  if (!P.n) readPower();
+  const C_uF = +$("cC").value, esr = +$("cEsr").value, L_uH = +$("cSup").value;
+  const m = Math.min(+$("cM").value, P.n), Ilim = +$("cLim").value;
+  $("cM").max = P.n; $("cMOut").textContent = m; $("cLimOut").textContent = fmt(Ilim, 1) + " A";
+  const Rpath = W.R ?? 0.02;
+  $("capWiring").textContent = `Wiring from section 03: ${fmt(Rpath * 1000, 1)} mΩ path resistance. ${P.n} servos from section 02, each holding ${fmt(P.hold, 2)} A and bursting to ${fmt(P.stall, 2)} A.`;
+  const base = { esr, L_uH, Rpath, Ilim, n: P.n, m, iHold: P.hold, iMove: P.move, iPeak: P.stall };
+  const a = simulate({ ...base, C_uF });
+  const b = C_uF > 0 ? simulate({ ...base, C_uF: 0 }) : null;
+  const s1 = css("--series-1"), s2 = css("--series-2"), mut = css("--muted");
+  const vSeries = [{ name: C_uF ? `with ${C_uF} µF` : "board only (10 µF)", color: s1, points: a.V }];
+  if (b) vSeries.push({ name: "board only (10 µF)", color: mut, dash: true, points: b.V });
+  const vlo = Math.min(3.0, Math.floor((Math.min(a.vmin, b ? b.vmin : 5) - 0.2) * 2) / 2);
+  const yT = []; for (let v = Math.max(0, vlo); v <= 5.01; v += vlo < 2 ? 1 : 0.5) yT.push(+v.toFixed(2));
+  const fx = (v, full) => (full ? "t = " + fmt(v, 1) + " ms" : fmt(v, 0) + " ms");
+  capV.draw({
+    xDomain: [0, 60], yDomain: [Math.max(0, vlo), 5.25], xTicks: [0, 10, 20, 30, 40, 50, 60], yTicks: yT,
+    fmtX: fx, fmtY: (v, full) => fmt(v, full ? 2 : 1) + " V",
+    refs: [{ y: 4.5, status: "warning", label: "4.5 V servos weaken / twitch" }, { y: 3.8, status: "critical", label: "≈3.8 V ESP32 may reset (same rail)" }],
+    series: vSeries,
+  });
+  legend($("capLegendV"), vSeries.map((s) => ({ label: s.name, color: s.color, dash: s.dash })));
+  const imax = Math.max(...a.IL.map((p) => p[1]), Ilim) * 1.1;
+  const iStep = niceStep(imax / 4), iT = []; for (let v = 0; v <= imax; v += iStep) iT.push(v);
+  const iSeries = [{ name: "servo load", color: s2, points: a.IL }, { name: "from supply", color: s1, points: a.IS }];
+  capI.draw({
+    xDomain: [0, 60], yDomain: [0, imax], xTicks: [0, 10, 20, 30, 40, 50, 60], yTicks: iT,
+    fmtX: fx, fmtY: (v, full) => fmt(v, full ? 2 : 1) + " A",
+    refs: [{ y: Ilim, status: "serious", label: `supply limit ${fmt(Ilim, 1)} A` }],
+    series: iSeries,
+  });
+  legend($("capLegendI"), iSeries.map((s) => ({ label: s.name, color: s.color })).concat([{ label: "gap = what the capacitor supplies", color: "transparent" }]));
+  const t = $("capTiles"); t.replaceChildren();
+  tile(t, "Lowest voltage", fmt(a.vmin, 2), "V", `at ${fmt(a.tmin * 1000, 2)} ms`, true);
+  tile(t, "Deepest dip", fmt(5 - a.vmin, 2), "V", C_uF ? `${fmt(5 - b.vmin, 2)} V without it` : "no capacitor");
+  tile(t, "Burst current", fmt(P.n * P.hold + m * (P.stall - P.hold), 1), "A", `${m} servos starting`);
+  const msg = $("capMsg"); msg.replaceChildren();
+  const avgLoad = P.n * P.hold + m * (P.move - P.hold);
+  if (avgLoad > Ilim) msg.append(chip("critical", "problem"), `  The load stays above the ${fmt(Ilim, 1)} A supply limit, so the capacitor drains and the rail collapses. A bigger capacitor cannot fix this; use a stronger supply.`);
+  else if (a.vmin < 3.8) msg.append(chip("critical", "problem"), "  The rail falls low enough to reset an ESP32 sharing it. Add capacitance or use a faster supply.");
+  else if (a.vmin < 4.5) msg.append(chip("warning", "check"), "  Servos will twitch or lose torque at each burst. More capacitance or low-ESR parts help.");
+  else msg.append(chip("good", "ok"), `  The rail stays above 4.5 V.${C_uF ? ` Without the capacitor it would fall to ${fmt(b.vmin, 2)} V.` : ""}`);
+}
+["cC", "cEsr", "cSup", "cM", "cLim"].forEach((id) => $(id).addEventListener("input", renderCap));
+
+/* =========================================================
+   5. BRING-UP CHECKLIST
+   ========================================================= */
+const BRING = [
+  ["Power and wiring check", "No servos plugged in yet. Set the supply's current limit to 3 A. Measure 5 V at V+ and check the capacitor's stripe is on −. The ESP32 GND must connect to the supply GND.", ""],
+  ["One servo, one channel", "Flash the bridge firmware and plug one servo into channel 0. In the Arduino serial monitor (115200 baud), send the line below. The servo should move and hold. Send X to let go, then close the monitor.", "P 0 1500"],
+  ["Calibrate all 12 servos", "Robot on the stand, legs in the air. One joint at a time, exactly as practised in section 01. Press s after each joint.", "python hardware/calibrate.py --port COM5"],
+  ["Whole-body standing pose", "Send the standing pose to all 12 servos. All four feet should sit under their hips at the same height (within 1–2 mm). Compare a side photo with the simulator. There is no script for this yet.", ""],
+  ["Scripted sit and stand in the air", "Move slowly between poses. After a minute, touch the servos. Warm is fine, too hot to hold is not.", ""],
+  ["Sit and stand on the floor", "Now the servos carry the weight. Watch the supply's current display and the rail voltage.", ""],
+  ["Scripted trot in place, then slow walk", "No AI yet. Play the same script in MuJoCo first to check it is possible.", ""],
+  ["IMU axes and bias", "Robot still: read gyro and accelerometer bias. Tilt it forward and to the left and check the signs match the model: X forward, Y left, Z up.", ""],
+  ["Trained policy, in the air first", "Only when hardware_calibration.json says MEASURED. Start on the stand, then on the floor with a hand ready to catch.", ""],
+];
+const KEY = "servo-bench-bringup";
+let done = [];
+try { done = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { done = []; }
+function renderBring() {
+  const ol = $("bring"); ol.replaceChildren();
+  BRING.forEach(([title, text, cmd], i) => {
+    const li = document.createElement("li"); if (done.includes(i)) li.className = "checked";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "bring" + i; cb.checked = done.includes(i);
+    cb.setAttribute("aria-label", title);
+    cb.addEventListener("change", () => {
+      done = cb.checked ? [...new Set([...done, i])] : done.filter((x) => x !== i);
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) { /* storage unavailable */ }
+      li.className = cb.checked ? "checked" : "";
+    });
+    const body = document.createElement("div"); body.className = "body";
+    const b = document.createElement("b"); b.textContent = title;
+    const s = document.createElement("span"); s.textContent = text;
+    body.append(b, s);
+    if (cmd) { const c = document.createElement("code"); c.textContent = cmd; body.appendChild(c); }
+    li.append(cb, body); ol.appendChild(li);
+  });
+}
+
+/* ---------- boot ---------- */
+readPower();
+renderCal();
+renderPower();
+renderBring();
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { renderCal(); renderPower(); });
+new MutationObserver(() => { renderCal(); renderPower(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+
+</body>
+</html>

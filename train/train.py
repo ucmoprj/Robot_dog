@@ -1,11 +1,11 @@
-"""GPU 병렬 PPO 학습 스크립트 (rsl_rl 사용).
+"""GPU-parallel PPO training script (uses rsl_rl).
 
-사용법 (프로젝트 루트에서):
+Usage (from the project root):
     source .venv/bin/activate
     python train/train.py --task train/tasks/stand.yaml --num_envs 4096 --iterations 500
 
-체크포인트/텐서보드 로그는 train/logs/<run_name>/ 에 저장된다.
-확인:
+Checkpoints and TensorBoard logs are saved to train/logs/<run_name>/.
+To view:
     tensorboard --logdir train/logs --bind_all
 """
 from __future__ import annotations
@@ -43,15 +43,15 @@ def main() -> None:
     run_name = args.run_name or f"{cfg['task']}_{time.strftime('%Y%m%d_%H%M%S')}"
     log_dir = str(Path(__file__).parent / "logs" / run_name)
 
-    from rsl_rl.runners import OnPolicyRunner  # 무거운 임포트라 필요할 때만 로드
+    from rsl_rl.runners import OnPolicyRunner  # heavy import, load only when needed
 
     train_cfg = build_train_cfg(args.num_steps_per_env, args.save_interval)
     runner = OnPolicyRunner(env, train_cfg, log_dir=log_dir, device=args.device)
 
-    print(f"태스크: {cfg['task']}  |  환경 수: {args.num_envs}  |  로그: {log_dir}")
+    print(f"Task: {cfg['task']}  |  envs: {args.num_envs}  |  logs: {log_dir}")
     runner.learn(num_learning_iterations=args.iterations)
 
-    print(f"학습 완료. 체크포인트: {log_dir}")
+    print(f"Training done. Checkpoints: {log_dir}")
 
 
 if __name__ == "__main__":

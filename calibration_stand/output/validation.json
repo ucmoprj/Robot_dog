@@ -1,0 +1,141 @@
+{
+  "parameters": {
+    "base_length": 180,
+    "base_width": 140,
+    "platform_height": 150,
+    "body_width": 66,
+    "jaw_clearance": 0.3,
+    "hole_diameter": 3.4,
+    "nut_across_flats": 5.7,
+    "nut_depth": 2.6
+  },
+  "parts": [
+    {
+      "part": "base",
+      "print_bounds_mm": [
+        180.01,
+        140.01,
+        6.01
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "mast",
+      "print_bounds_mm": [
+        110.0,
+        50.0,
+        64.0
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "carriage",
+      "print_bounds_mm": [
+        86.0,
+        90.0,
+        44.0
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "jaw_left",
+      "print_bounds_mm": [
+        40.0,
+        34.0,
+        7.7
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "cap_left",
+      "print_bounds_mm": [
+        40.0,
+        15.0,
+        4.0
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "jaw_right",
+      "print_bounds_mm": [
+        40.0,
+        34.0,
+        7.7
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "cap_right",
+      "print_bounds_mm": [
+        40.0,
+        15.0,
+        4.0
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    },
+    {
+      "part": "fit_coupon",
+      "print_bounds_mm": [
+        35.0,
+        22.0,
+        6.0
+      ],
+      "solid_count": 1,
+      "valid": true,
+      "fits_220mm_square": true
+    }
+  ],
+  "stand_internal_clashes": [],
+  "carriage_slot_fastener_access": [
+    {
+      "x_mm": -12,
+      "y_mm": -24.5,
+      "access_diameter_mm": 7,
+      "bolt_center_travel_mm": 25,
+      "underside_obstruction_mm3": 0.0,
+      "slot_obstruction_mm3": 0.0
+    },
+    {
+      "x_mm": -12,
+      "y_mm": 24.5,
+      "access_diameter_mm": 7,
+      "bolt_center_travel_mm": 25,
+      "underside_obstruction_mm3": 0.0,
+      "slot_obstruction_mm3": 0.0
+    },
+    {
+      "x_mm": 12,
+      "y_mm": -24.5,
+      "access_diameter_mm": 7,
+      "bolt_center_travel_mm": 25,
+      "underside_obstruction_mm3": 0.0,
+      "slot_obstruction_mm3": 0.0
+    },
+    {
+      "x_mm": 12,
+      "y_mm": 24.5,
+      "access_diameter_mm": 7,
+      "bolt_center_travel_mm": 25,
+      "underside_obstruction_mm3": 0.0,
+      "slot_obstruction_mm3": 0.0
+    }
+  ],
+  "robot_stand_clashes": [],
+  "pose_count": 61,
+  "minimum_robot_z_mm": 55.678,
+  "limitation": "Nominal configuration only. Finite one-joint pose samples, not all combined poses. No cables or real fasteners modeled. No physical strength verification."
+}

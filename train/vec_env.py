@@ -1,15 +1,15 @@
-"""GPU 병렬 환경 (mujoco_warp 기반).
+"""GPU-parallel environment (mujoco_warp).
 
-env.py(QuadrupedEnv, CPU 단일 환경)와 동일한 관측/보상/종료 로직을,
-mujoco_warp 배치 데이터(warp 배열, (N, ...) 형태) 위에서 수행한다.
-warp<->torch 사이는 wp.to_torch()로 GPU 메모리를 복사 없이(zero-copy) 공유한다.
+Runs the same observation/reward/termination logic as env.py (QuadrupedEnv, a
+single CPU env) on mujoco_warp batch data (warp arrays shaped (N, ...)).
+warp <-> torch share GPU memory without copying (zero-copy) via wp.to_torch().
 
-reward_terms.py의 보상 함수는 CPU/GPU 어느 쪽에서 왔든 동일한 SimState
-컨테이너만 받으므로, 태스크(tasks/*.yaml)를 바꿔도 이 파일은 건드릴 필요가
-없다 — env.py와 정확히 같은 이유다.
+The reward functions in reward_terms.py only take the SimState container,
+whether it came from CPU or GPU, so changing the task (tasks/*.yaml) never
+requires editing this file, for exactly the same reason as env.py.
 
-rsl_rl.env.VecEnv 추상 클래스를 구현해서 rsl_rl의 PPO 러너가 바로 이 클래스를
-사용할 수 있게 한다 (train.py 참고).
+Implements the rsl_rl.env.VecEnv abstract class so rsl_rl's PPO runner can use
+it directly (see train.py).
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from reward_terms import REGISTRY, SimState, is_fallen  # noqa: E402
 
 
 class _RewardCtx:
-    """cfg 딕셔너리를 reward_terms.py 함수들이 기대하는 속성 접근으로 감싼다."""
+    """Wrap the cfg dict in the attribute access that reward_terms.py expects."""
 
     def __init__(self, cfg: dict):
         self.target_height = cfg["target_height"]
@@ -46,7 +46,7 @@ def _sensor_slice(model: mujoco.MjModel, name: str) -> slice:
 
 
 class VecQuadrupedEnv(VecEnv):
-    """rsl_rl.env.VecEnv 구현체. num_envs개의 로봇을 GPU에서 동시에 시뮬레이션한다."""
+    """rsl_rl.env.VecEnv implementation. Simulates num_envs robots at once on the GPU."""
 
     def __init__(
         self,
@@ -63,8 +63,8 @@ class VecQuadrupedEnv(VecEnv):
         self.device = device
         self._ctx = _RewardCtx(task_config)
 
-        # CPU 모델은 구조 정보(관절 제한, 센서 주소, 토크 한계 등) 조회용으로만
-        # 쓰고, 실제 물리 스텝은 mujoco_warp 배치 데이터(GPU)에서 수행한다.
+        # The CPU model is only used to look up structure (joint limits, sensor
+        # addresses, torque limits, ...); physics steps run on the mujoco_warp batch (GPU).
         self.model = mujoco.MjModel.from_xml_path(str(xml_path))
         self.data = mujoco.MjData(self.model)
         mujoco.mj_forward(self.model, self.data)
@@ -73,12 +73,12 @@ class VecQuadrupedEnv(VecEnv):
         self.mjw_data = mjw.put_data(self.model, self.data, nworld=num_envs)
 
         self.dt = self.model.opt.timestep
-        self.control_decimation = 20  # 물리 step(1ms) x 20 = 50Hz 제어 주기, env.py와 동일
+        self.control_decimation = 20  # physics step (1 ms) x 20 = 50 Hz control rate, same as env.py
         self.max_episode_length = max(
             1, int(task_config["episode_length_s"] / (self.dt * self.control_decimation))
         )
 
-        # ---- warp -> torch zero-copy 뷰 (같은 GPU 메모리를 그대로 가리킴) -------
+        # ---- warp -> torch zero-copy views (point at the same GPU memory) -------
         self._qpos = wp.to_torch(self.mjw_data.qpos)                      # (N, 19)
         self._qvel = wp.to_torch(self.mjw_data.qvel)                       # (N, 18)
         self._ctrl = wp.to_torch(self.mjw_data.ctrl)                       # (N, 12)
@@ -99,7 +99,7 @@ class VecQuadrupedEnv(VecEnv):
 
         self._default_qpos = torch.as_tensor(self.data.qpos.copy(), device=device, dtype=torch.float32)
 
-        # ---- VecEnv가 요구하는 상태 버퍼 --------------------------------------
+        # ---- state buffers required by VecEnv -----------------------------------
         self.episode_length_buf = torch.zeros(num_envs, dtype=torch.long, device=device)
         self._action_history = torch.zeros(num_envs, N_ACTION_HISTORY, N_JOINTS, device=device)
         self._prev_action = torch.zeros(num_envs, N_JOINTS, device=device)
@@ -109,9 +109,9 @@ class VecQuadrupedEnv(VecEnv):
 
         self._reset_idx(torch.arange(num_envs, device=device))
 
-    # ---- 내부 유틸 -----------------------------------------------------------
+    # ---- internal helpers ----------------------------------------------------
     def _reset_idx(self, env_ids: torch.Tensor) -> None:
-        """일부 환경만 골라 초기 상태로 되돌린다 (env.py의 domain randomization과 동일 폭)."""
+        """Reset only the selected envs (same randomization ranges as env.py)."""
         if env_ids.numel() == 0:
             return
         n = env_ids.numel()
@@ -146,8 +146,8 @@ class VecQuadrupedEnv(VecEnv):
         )
 
     def _compute_reward(self, state: SimState):
-        """가중합(total)과 함께, 항목별 미가중 원시값(terms)도 반환한다.
-        terms는 학습 자체에는 안 쓰이고 TensorBoard 그래프용 로깅에만 쓰인다."""
+        """Return the weighted sum (total) and the raw unweighted value of each term (terms).
+        terms is not used for learning, only for TensorBoard logging."""
         total = torch.zeros(self.num_envs, device=self.device)
         terms: dict[str, torch.Tensor] = {}
         for name, w in self.weights.items():
@@ -156,7 +156,7 @@ class VecQuadrupedEnv(VecEnv):
             total = total + w * value
         return total, terms
 
-    # ---- rsl_rl.env.VecEnv 인터페이스 -----------------------------------------
+    # ---- rsl_rl.env.VecEnv interface ------------------------------------------
     def get_observations(self) -> TensorDict:
         return self._get_obs()
 
@@ -179,8 +179,8 @@ class VecQuadrupedEnv(VecEnv):
         timed_out = self.episode_length_buf >= self.max_episode_length
         dones = fallen | timed_out
 
-        # TensorBoard용 세부 로그: 보상 항목별 원시값 + 로봇 상태 지표.
-        # 키에 "/"가 있으면 그 이름 그대로, 없으면 "Episode/" 아래에 그래프가 생긴다.
+        # Detailed TensorBoard logs: raw value of each reward term + robot state metrics.
+        # Keys containing "/" are used as-is; others are plotted under "Episode/".
         log = {f"Reward/{name}": value for name, value in reward_terms.items()}
         log["State/height"] = state.height
         log["State/upright"] = state.up_z
@@ -190,7 +190,7 @@ class VecQuadrupedEnv(VecEnv):
         reset_ids = dones.nonzero(as_tuple=False).squeeze(-1)
         if reset_ids.numel() > 0:
             self._reset_idx(reset_ids)
-            mjw.forward(self.mjw_model, self.mjw_data)  # 리셋된 환경의 센서/파생값 재계산
+            mjw.forward(self.mjw_model, self.mjw_data)  # recompute sensors/derived values for the reset envs
 
         obs = self._get_obs()
         extras = {"time_outs": timed_out, "log": log}

@@ -1,8 +1,8 @@
-"""env.py의 QuadrupedEnv를 MuJoCo 인터랙티브 뷰어로 직접 보면서 확인하는 스크립트.
-아직 학습 전이므로 "무작위 행동" 또는 "가만히 있기(zero)" 정책만 보여준다.
-학습된 정책이 생기면 --policy 부분만 그 정책으로 바꾸면 된다 (나중에 play.py로 발전).
+"""Watch env.py's QuadrupedEnv in the interactive MuJoCo viewer.
+Shows only a "random action" or "hold still (zero)" policy, no trained network
+(use play.py for a trained checkpoint).
 
-사용법 (프로젝트 루트에서):
+Usage (from the project root):
     source .venv/bin/activate
     python train/view_task.py --task train/tasks/stand.yaml --policy zero
     python train/view_task.py --task train/tasks/stand.yaml --policy random
@@ -36,7 +36,7 @@ def main() -> None:
     rng = np.random.default_rng(args.seed)
     lo, hi = env._ctrlrange()[:, 0], env._ctrlrange()[:, 1]
 
-    print(f"태스크: {cfg['task']}  |  정책: {args.policy}  |  창을 닫으면 종료됩니다.")
+    print(f"Task: {cfg['task']}  |  policy: {args.policy}  |  close the window to exit.")
 
     with mujoco.viewer.launch_passive(env.model, env.data) as viewer:
         while viewer.is_running():
@@ -49,12 +49,12 @@ def main() -> None:
 
             obs, reward, done, info = env.step(action)
             if done:
-                print(f"에피소드 종료 (last reward={reward:.2f}) -> 리셋")
+                print(f"Episode ended (last reward={reward:.2f}) -> reset")
                 obs = env.reset()
 
             viewer.sync()
 
-            # 제어 주기(control_decimation * timestep)에 맞춰 재생 속도를 실제 시간과 동기화
+            # sync playback to real time at the control period (control_decimation * timestep)
             elapsed = time.time() - step_start
             sleep_time = env.dt * env.control_decimation - elapsed
             if sleep_time > 0:

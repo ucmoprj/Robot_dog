@@ -1,28 +1,28 @@
-"""재사용 가능한 보상 부품(reward term) 모음.
+"""Reusable reward terms.
 
-이 파일은 물리 백엔드(단일 CPU `mujoco` 또는 GPU 배치 `mujoco_warp`)에 상관없이
-동일한 보상 수식을 쓸 수 있도록, 두 값을 다 torch 텐서로 통일해서 받는다:
+So the same reward formulas work with either physics backend (single CPU `mujoco`
+or batched GPU `mujoco_warp`), every input arrives as a torch tensor:
 
-    - env.py (CPU, 단일 환경): mujoco.MjData에서 값을 뽑아 torch 텐서로 감싼다
-      (모양이 예: gyro -> (3,) )
-    - vec_env.py (GPU, N개 배치): mujoco_warp 데이터에서 직접 torch 뷰를 얻는다
-      (모양이 예: gyro -> (N, 3) )
+    - env.py (CPU, single env): values from mujoco.MjData wrapped as torch tensors
+      (shape e.g. gyro -> (3,))
+    - vec_env.py (GPU, batch of N): torch views taken directly from mujoco_warp data
+      (shape e.g. gyro -> (N, 3))
 
-즉 "마지막 차원이 물리량 차원"이라는 규칙만 지키면, 배치 크기가 1이든 4096이든
-아래 함수들은 그대로 동작한다 (torch의 브로드캐스팅/마지막축 reduction을 이용).
+As long as "the last dimension is the physical quantity", the functions below work
+for a batch of 1 or 4096 (using torch broadcasting and last-axis reductions).
 
-각 함수의 시그니처는 (state: SimState, ctx) -> torch.Tensor 로 통일한다.
+Every function has the signature (state: SimState, ctx) -> torch.Tensor.
 
-새 보상 아이디어가 생기면:
-    1) 여기에 함수 하나 추가
-    2) 아래 REGISTRY에 이름-함수로 한 줄 등록
-만 하면 된다. env.py, vec_env.py, 학습 루프(train.py)는 건드릴 필요가 없다.
+To add a new reward idea:
+    1) add a function here
+    2) register it in REGISTRY below with one line
+Nothing else changes: env.py, vec_env.py and the training loop (train.py) stay as they are.
 
-주의: SimState에 담기는 값(자세 up_z, 위치, 속도, actuator_force 등)은 전부
-"시뮬레이터 특권 정보"다. 실물 로봇(MG90S 12개 + IMU 1개)은 이런 값을 직접
-측정할 수 없지만, 보상은 학습 중에만 시뮬레이터 안에서 계산되고 실물에는
-절대 올라가지 않으므로 문제없다. 반면 관측(observation, env/vec_env의
-_get_obs)은 반드시 실물 센서로 재현 가능한 값만 사용해야 한다.
+Note: everything in SimState (orientation up_z, position, velocity, actuator_force,
+...) is privileged simulator information. The real robot (12 x MG90S + 1 IMU) cannot
+measure these directly. That is fine for rewards, which are computed only inside the
+simulator during training and never run on hardware. Observations (_get_obs in
+env/vec_env), however, must only use values the real sensors can reproduce.
 """
 from __future__ import annotations
 
@@ -33,69 +33,69 @@ import torch
 
 @dataclass
 class SimState:
-    """보상 계산에 필요한 값만 뽑아 담는, 백엔드에 무관한 공통 컨테이너.
+    """Backend-independent container holding only what reward computation needs.
 
-    모든 필드는 마지막 차원이 물리량 차원이다. 단일 환경이면 배치 차원이
-    없고(예: gyro.shape == (3,)), 배치 환경이면 맨 앞에 (N,)이 붙는다
-    (예: gyro.shape == (N, 3)).
+    In every field the last dimension is the physical quantity. A single env has
+    no batch dimension (e.g. gyro.shape == (3,)); a batched env adds a leading (N,)
+    (e.g. gyro.shape == (N, 3)).
     """
 
-    height: torch.Tensor               # (...,)      몸체 z높이
-    up_z: torch.Tensor                 # (...,)      직립도, 1.0=완전 직립
-    gyro: torch.Tensor                 # (..., 3)    각속도(자이로)
-    lin_vel: torch.Tensor              # (..., 3)    몸체 선속도 (vx, vy, vz)
-    ang_vel_z: torch.Tensor            # (...,)      yaw 각속도
-    actuator_force_norm: torch.Tensor  # (..., 12)   토크/forcerange 정규화값
-    action: torch.Tensor               # (..., 12)   이번 스텝 명령
-    prev_action: torch.Tensor          # (..., 12)   직전 스텝 명령
+    height: torch.Tensor               # (...,)      body z height
+    up_z: torch.Tensor                 # (...,)      uprightness, 1.0 = fully upright
+    gyro: torch.Tensor                 # (..., 3)    angular velocity (gyro)
+    lin_vel: torch.Tensor              # (..., 3)    body linear velocity (vx, vy, vz)
+    ang_vel_z: torch.Tensor            # (...,)      yaw rate
+    actuator_force_norm: torch.Tensor  # (..., 12)   torque normalized by forcerange
+    action: torch.Tensor               # (..., 12)   command this step
+    prev_action: torch.Tensor          # (..., 12)   command previous step
 
 
 def reward_upright(state: SimState, ctx) -> torch.Tensor:
-    """직립 자세 보상. 넘어질수록 값이 줄어든다 (최대 1.0)."""
+    """Upright reward. Shrinks as the body tips over (max 1.0)."""
     return state.up_z
 
 
 def reward_height(state: SimState, ctx) -> torch.Tensor:
-    """목표 몸체 높이 근처에 있을수록 1.0에 가까운 보상."""
+    """Approaches 1.0 the closer the body is to the target height."""
     return torch.exp(-((state.height - ctx.target_height) ** 2) / ctx.height_scale ** 2)
 
 
 def penalty_ang_vel(state: SimState, ctx) -> torch.Tensor:
-    """몸체가 심하게 흔들릴수록(각속도 클수록) 페널티."""
+    """Penalty for body shaking (large angular velocity)."""
     return -(state.gyro ** 2).sum(-1)
 
 
 def penalty_action_rate(state: SimState, ctx) -> torch.Tensor:
-    """명령(목표 관절각)이 스텝 사이에 급격히 바뀌는 것에 대한 페널티.
-    서보 보호 + 실물 명령 변화율 제한(README: 4 rad/s)과 궁합이 맞는 행동을 유도."""
+    """Penalty for commands (target joint angles) that jump between steps.
+    Protects the servos and favors behavior compatible with the hardware rate limit (README: 4 rad/s)."""
     return -((state.action - state.prev_action) ** 2).sum(-1)
 
 
 def penalty_torque(state: SimState, ctx) -> torch.Tensor:
-    """액추에이터 힘(토크)을 forcerange로 정규화해 페널티. MG90S 토크 예산(0.06 N·m)
-    안에서 효율적으로 움직이도록 유도."""
+    """Penalty on actuator force (torque) normalized by forcerange. Encourages moving
+    efficiently within the MG90S torque budget (0.06 N·m)."""
     return -(state.actuator_force_norm ** 2).sum(-1)
 
 
 def reward_alive(state: SimState, ctx) -> torch.Tensor:
-    """매 스텝 살아있으면(=아직 안 넘어졌으면) 주는 생존 보너스."""
+    """Survival bonus for every step alive (not yet fallen)."""
     return torch.ones_like(state.height)
 
 
 def reward_velocity_track(state: SimState, ctx) -> torch.Tensor:
-    """목표 전진 속도(target_vx)를 얼마나 잘 따라가는지."""
+    """How well the forward velocity tracks target_vx."""
     vx = state.lin_vel[..., 0]
     return torch.exp(-((vx - ctx.target_vx) ** 2) / ctx.velocity_scale ** 2)
 
 
 def penalty_lateral(state: SimState, ctx) -> torch.Tensor:
-    """옆으로 새거나(vy) 위아래로 튀는(vz) 움직임 페널티."""
+    """Penalty for drifting sideways (vy) or bouncing (vz)."""
     vy, vz = state.lin_vel[..., 1], state.lin_vel[..., 2]
     return -(vy.abs() + 0.5 * vz.abs())
 
 
 def penalty_yaw(state: SimState, ctx) -> torch.Tensor:
-    """제자리 회전(yaw) 페널티. 똑바로 걷도록 유도."""
+    """Penalty for turning (yaw). Encourages walking straight."""
     return -state.ang_vel_z.abs()
 
 
@@ -113,5 +113,5 @@ REGISTRY = {
 
 
 def is_fallen(state: SimState, fall_height: float, fall_upright: float) -> torch.Tensor:
-    """넘어짐 판정. env.py/vec_env.py가 동일하게 재사용한다."""
+    """Fall check. Reused as-is by env.py and vec_env.py."""
     return (state.height < fall_height) | (state.up_z < fall_upright)
