@@ -1,11 +1,12 @@
-"""단일 환경 Gym 스타일 래퍼 (CPU mujoco, 발 접촉 기반 gait 보상 버전).
+"""Single-environment Gym-style wrapper (CPU mujoco, gait-reward version using foot contacts).
 
-env.py를 건드리지 않고 별도 파일로 만들었다 — 기존 walk_forward.yaml 학습과
-나란히 비교하기 위해서다. 관측(신경망 입력) 정의는 env.py와 완전히 동일
-(N_JOINTS, N_ACTION_HISTORY, OBS_DIM을 그대로 재사용)하고, 물리 모델만
-발 접촉 센서가 추가된 scene_gait.xml을 쓰고, 보상만 REGISTRY_GAIT을 쓴다.
+A separate file so env.py stays untouched and results can be compared side by side
+with the existing walk_forward.yaml training. The observation (network input) is
+exactly the same as env.py (N_JOINTS, N_ACTION_HISTORY, OBS_DIM are reused). Only the
+physics model differs (scene_gait.xml, which adds foot contact sensors), and the
+rewards come from REGISTRY_GAIT.
 
-사용 예:
+Example:
     env = QuadrupedEnvGait(load_task_config("tasks/walk_forward_gait.yaml"))
     obs = env.reset()
     obs, reward, done, info = env.step(action)
@@ -19,18 +20,18 @@ import numpy as np
 import torch
 import yaml
 
-from env import N_ACTION_HISTORY, N_JOINTS, OBS_DIM, _CONFIG_DEFAULTS  # noqa: F401 (OBS_DIM은 외부에서 씀)
+from env import N_ACTION_HISTORY, N_JOINTS, OBS_DIM, _CONFIG_DEFAULTS  # noqa: F401 (OBS_DIM is used by other modules)
 from reward_terms import is_fallen
 from reward_terms_gait import REGISTRY_GAIT, GaitSimState
 
 ROBOT_XML_GAIT = Path(__file__).resolve().parent.parent / "dog_mujoco" / "scene_gait.xml"
 
 _FOOT_SENSORS = ["fl_foot_contact", "fr_foot_contact", "bl_foot_contact", "br_foot_contact"]
-_CONTACT_THRESHOLD = 0.05  # 이 값보다 힘이 크면 "접촉"으로 판정 (완전 지지시 0.6~0.85 수준)
+_CONTACT_THRESHOLD = 0.05  # force above this counts as "contact" (about 0.6-0.85 under full support)
 
 
 def load_task_config(path: str | Path) -> dict:
-    """tasks/*.yaml을 읽고 누락된 값은 기본값으로 채운다 (REGISTRY_GAIT 기준으로 검증)."""
+    """Read tasks/*.yaml and fill missing values with defaults (validated against REGISTRY_GAIT)."""
     with open(path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     for key, val in _CONFIG_DEFAULTS.items():
@@ -38,13 +39,13 @@ def load_task_config(path: str | Path) -> dict:
     unknown = set(cfg["reward_weights"]) - set(REGISTRY_GAIT)
     if unknown:
         raise ValueError(
-            f"{path} 의 reward_weights에 REGISTRY_GAIT에 없는 이름이 있습니다: {unknown}"
+            f"{path}: reward_weights contains names not in REGISTRY_GAIT: {unknown}"
         )
     return cfg
 
 
 class QuadrupedEnvGait:
-    """gym 유사 인터페이스. env.py의 QuadrupedEnv와 동일한 구조 + 발 접촉 상태 추적."""
+    """Gym-like interface. Same structure as env.py's QuadrupedEnv, plus foot contact tracking."""
 
     def __init__(self, task_config: dict, xml_path: Path = ROBOT_XML_GAIT, seed: int | None = None):
         self.cfg = task_config
@@ -76,7 +77,7 @@ class QuadrupedEnvGait:
         self._prev_contact = np.zeros(4, dtype=bool)
         self._step_count = 0
 
-    # ---- 내부 유틸 -------------------------------------------------------
+    # ---- internal helpers ------------------------------------------------
     def _ctrlrange(self) -> np.ndarray:
         return self.model.actuator_ctrlrange
 
@@ -94,7 +95,7 @@ class QuadrupedEnvGait:
         return np.concatenate([gyro, accel, self._action_history.flatten()]).astype(np.float32)
 
     def _update_foot_contact(self) -> tuple[np.ndarray, np.ndarray]:
-        """발 접촉 상태를 갱신하고 (contact_float(4,), landing_bonus(4,))를 반환한다."""
+        """Update foot contact state and return (contact_float(4,), landing_bonus(4,))."""
         force = self.data.sensordata[self._foot_sensor_adr]
         contact = force > _CONTACT_THRESHOLD
         just_landed = (~self._prev_contact) & contact
@@ -133,7 +134,7 @@ class QuadrupedEnvGait:
         total = sum(self.weights[name] * terms[name] for name in self.weights)
         return float(total), terms
 
-    # ---- gym 인터페이스 ---------------------------------------------------
+    # ---- gym interface ---------------------------------------------------
     def reset(self) -> np.ndarray:
         mujoco.mj_resetData(self.model, self.data)
         self.data.qpos[:] = self._sample_reset_qpos()

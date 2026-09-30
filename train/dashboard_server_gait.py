@@ -1,10 +1,10 @@
-"""걷기(gait) 학습용 대시보드.
+"""Dashboard for gait training.
 
-dashboard_server.py를 건드리지 않고, 발 접촉 관련 새 그래프
-(feet_air_time, gait_symmetry, feet_in_contact)의 설명만 추가해서 그대로
-재사용한다 — 다른 모든 그래프(Loss/*, Train/*, 기존 Reward/*)는 완전히 동일.
+Reuses dashboard_server.py unchanged and only adds descriptions for the new
+foot-contact graphs (feet_air_time, gait_symmetry, feet_in_contact). All other
+graphs (Loss/*, Train/*, existing Reward/*) are exactly the same.
 
-사용법:
+Usage:
     python train/dashboard_server_gait.py --logdir train/logs/walk_gait_demo --port 6009
 """
 from __future__ import annotations

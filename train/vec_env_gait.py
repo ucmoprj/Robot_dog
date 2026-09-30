@@ -1,9 +1,10 @@
-"""GPU 병렬 환경 (mujoco_warp 기반, 발 접촉 기반 gait 보상 버전).
+"""GPU-parallel environment (mujoco_warp, gait-reward version using foot contacts).
 
-vec_env.py를 건드리지 않고 별도 파일로 만들었다 — 기존 walk_forward.yaml
-학습과 나란히 비교하기 위해서다. 관측(신경망 입력) 정의는 vec_env.py와
-완전히 동일하고(N_JOINTS, N_ACTION_HISTORY 재사용), 물리 모델만 발 접촉
-센서가 추가된 scene_gait.xml을 쓰고, 보상만 REGISTRY_GAIT을 쓴다.
+A separate file so vec_env.py stays untouched and results can be compared side by
+side with the existing walk_forward.yaml training. The observation (network input)
+is exactly the same as vec_env.py (N_JOINTS, N_ACTION_HISTORY are reused). Only the
+physics model differs (scene_gait.xml, which adds foot contact sensors), and the
+rewards come from REGISTRY_GAIT.
 """
 from __future__ import annotations
 
@@ -40,7 +41,7 @@ def _sensor_slice(model: mujoco.MjModel, name: str) -> slice:
 
 
 class VecQuadrupedEnvGait(VecEnv):
-    """rsl_rl.env.VecEnv 구현체 (gait 보상 버전)."""
+    """rsl_rl.env.VecEnv implementation (gait-reward version)."""
 
     def __init__(
         self,
@@ -106,7 +107,7 @@ class VecQuadrupedEnvGait(VecEnv):
 
         self._reset_idx(torch.arange(num_envs, device=device))
 
-    # ---- 내부 유틸 -----------------------------------------------------------
+    # ---- internal helpers ----------------------------------------------------
     def _reset_idx(self, env_ids: torch.Tensor) -> None:
         if env_ids.numel() == 0:
             return
@@ -130,7 +131,7 @@ class VecQuadrupedEnvGait(VecEnv):
         return TensorDict({"policy": obs}, batch_size=[self.num_envs])
 
     def _update_foot_contact(self):
-        """발 접촉 상태를 갱신하고 (contact(N,4), landing_bonus(N,4))를 반환한다."""
+        """Update foot contact state and return (contact(N,4), landing_bonus(N,4))."""
         force = torch.stack([self._sensordata[:, a] for a in self._foot_adr], dim=-1)  # (N,4)
         contact = force > _CONTACT_THRESHOLD
         just_landed = (~self._prev_contact) & contact
@@ -166,7 +167,7 @@ class VecQuadrupedEnvGait(VecEnv):
             total = total + w * value
         return total, terms
 
-    # ---- rsl_rl.env.VecEnv 인터페이스 -----------------------------------------
+    # ---- rsl_rl.env.VecEnv interface ------------------------------------------
     def get_observations(self) -> TensorDict:
         return self._get_obs()
 
@@ -194,7 +195,7 @@ class VecQuadrupedEnvGait(VecEnv):
         log["State/upright"] = state.up_z
         log["State/lin_vel_x"] = state.lin_vel[..., 0]
         log["State/fall_rate"] = fallen.float()
-        log["State/feet_in_contact"] = state.foot_contact.sum(-1)  # 0~4, gait 버전 전용 지표
+        log["State/feet_in_contact"] = state.foot_contact.sum(-1)  # 0-4, metric only in the gait version
 
         reset_ids = dones.nonzero(as_tuple=False).squeeze(-1)
         if reset_ids.numel() > 0:
