@@ -1,0 +1,229 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="mg90s_dog">
+  <compiler angle="radian" meshdir="assets" autolimits="true" />
+  <option timestep="0.001" integrator="implicitfast" gravity="0 0 -9.80665" iterations="80" />
+  <default>
+    <joint damping="0.002" armature="0.00002" frictionloss="0.001" />
+    <geom friction="0.8 0.005 0.0001" condim="3" solref="0.006 1" />
+    <position kp="1.8" kv="0.035" forcerange="-0.06 0.06" />
+  </default>
+  <asset>
+    <mesh name="fl_roll_MG90S" file="fl_roll_MG90S.stl" />
+    <mesh name="fr_roll_MG90S" file="fr_roll_MG90S.stl" />
+    <mesh name="bl_roll_MG90S" file="bl_roll_MG90S.stl" />
+    <mesh name="br_roll_MG90S" file="br_roll_MG90S.stl" />
+    <mesh name="body_base" file="body_base.stl" />
+    <mesh name="electronics_deck" file="electronics_deck.stl" />
+    <mesh name="imu_bridge" file="imu_bridge.stl" />
+    <mesh name="battery_envelope" file="battery_envelope.stl" />
+    <mesh name="PCA9685_envelope" file="PCA9685_envelope.stl" />
+    <mesh name="controller_envelope" file="controller_envelope.stl" />
+    <mesh name="IMU_envelope" file="IMU_envelope.stl" />
+    <mesh name="wiring_regulator_allowance" file="wiring_regulator_allowance.stl" />
+    <mesh name="fastener_mass_allowance" file="fastener_mass_allowance.stl" />
+    <mesh name="fl_shoulder_bracket" file="fl_shoulder_bracket.stl" />
+    <mesh name="fl_roll_horn" file="fl_roll_horn.stl" />
+    <mesh name="fl_hip_MG90S" file="fl_hip_MG90S.stl" />
+    <mesh name="fl_thigh_bracket" file="fl_thigh_bracket.stl" />
+    <mesh name="fl_hip_horn" file="fl_hip_horn.stl" />
+    <mesh name="fl_knee_MG90S" file="fl_knee_MG90S.stl" />
+    <mesh name="fl_lower_leg" file="fl_lower_leg.stl" />
+    <mesh name="fl_knee_horn" file="fl_knee_horn.stl" />
+    <mesh name="fl_foot_pad" file="fl_foot_pad.stl" />
+    <mesh name="fr_shoulder_bracket" file="fr_shoulder_bracket.stl" />
+    <mesh name="fr_roll_horn" file="fr_roll_horn.stl" />
+    <mesh name="fr_hip_MG90S" file="fr_hip_MG90S.stl" />
+    <mesh name="fr_thigh_bracket" file="fr_thigh_bracket.stl" />
+    <mesh name="fr_hip_horn" file="fr_hip_horn.stl" />
+    <mesh name="fr_knee_MG90S" file="fr_knee_MG90S.stl" />
+    <mesh name="fr_lower_leg" file="fr_lower_leg.stl" />
+    <mesh name="fr_knee_horn" file="fr_knee_horn.stl" />
+    <mesh name="fr_foot_pad" file="fr_foot_pad.stl" />
+    <mesh name="bl_shoulder_bracket" file="bl_shoulder_bracket.stl" />
+    <mesh name="bl_roll_horn" file="bl_roll_horn.stl" />
+    <mesh name="bl_hip_MG90S" file="bl_hip_MG90S.stl" />
+    <mesh name="bl_thigh_bracket" file="bl_thigh_bracket.stl" />
+    <mesh name="bl_hip_horn" file="bl_hip_horn.stl" />
+    <mesh name="bl_knee_MG90S" file="bl_knee_MG90S.stl" />
+    <mesh name="bl_lower_leg" file="bl_lower_leg.stl" />
+    <mesh name="bl_knee_horn" file="bl_knee_horn.stl" />
+    <mesh name="bl_foot_pad" file="bl_foot_pad.stl" />
+    <mesh name="br_shoulder_bracket" file="br_shoulder_bracket.stl" />
+    <mesh name="br_roll_horn" file="br_roll_horn.stl" />
+    <mesh name="br_hip_MG90S" file="br_hip_MG90S.stl" />
+    <mesh name="br_thigh_bracket" file="br_thigh_bracket.stl" />
+    <mesh name="br_hip_horn" file="br_hip_horn.stl" />
+    <mesh name="br_knee_MG90S" file="br_knee_MG90S.stl" />
+    <mesh name="br_lower_leg" file="br_lower_leg.stl" />
+    <mesh name="br_knee_horn" file="br_knee_horn.stl" />
+    <mesh name="br_foot_pad" file="br_foot_pad.stl" />
+  </asset>
+  <worldbody>
+    <body name="body" pos="0 0 0.1195837861">
+      <freejoint name="floating_base" />
+      <site name="imu" pos="0 0 0.026" size="0.002" rgba="1 0.6 0 1" />
+      <inertial mass="0.16085522828" pos="-1.746911734e-18 -0.0001740695674 -0.002806351854" fullinertia="7.964786281e-05 0.0001564696206 0.0001857229865 -2.75928781e-22 -1.389157581e-21 3.865778519e-07" />
+      <geom name="fl_roll_MG90S" type="mesh" mesh="fl_roll_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="fr_roll_MG90S" type="mesh" mesh="fr_roll_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="bl_roll_MG90S" type="mesh" mesh="bl_roll_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="br_roll_MG90S" type="mesh" mesh="br_roll_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="body_base" type="mesh" mesh="body_base" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="electronics_deck" type="mesh" mesh="electronics_deck" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="imu_bridge" type="mesh" mesh="imu_bridge" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="battery_envelope" type="mesh" mesh="battery_envelope" rgba="0.91 0.6 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="PCA9685_envelope" type="mesh" mesh="PCA9685_envelope" rgba="0.12 0.55 0.39 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="controller_envelope" type="mesh" mesh="controller_envelope" rgba="0.12 0.55 0.39 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="IMU_envelope" type="mesh" mesh="IMU_envelope" rgba="0.12 0.55 0.39 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="wiring_regulator_allowance" type="mesh" mesh="wiring_regulator_allowance" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="fastener_mass_allowance" type="mesh" mesh="fastener_mass_allowance" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+      <geom name="body_collision_0" type="box" size="0.01125 0.0061 0.0114" pos="0.03675 0.024 -0.0056" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_1" type="box" size="0.01125 0.0061 0.0114" pos="0.03675 -0.024 -0.0056" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_2" type="box" size="0.01125 0.0061 0.0114" pos="-0.03675 0.024 -0.0056" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_3" type="box" size="0.01125 0.0061 0.0114" pos="-0.03675 -0.024 -0.0056" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_4" type="box" size="0.0225 0.012 0.006" pos="0 0 -0.01" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_5" type="box" size="0.031 0.0125 0.0025" pos="0 -0.014 0.016" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_6" type="box" size="0.025 0.0125 0.0035" pos="0 0.014 0.017" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_7" type="box" size="0.01 0.008 0.0015" pos="0 0 0.026" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_8" type="box" size="0.058 0.033 0.001" pos="0 0 -0.02" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <geom name="body_collision_9" type="box" size="0.058 0.033 0.001" pos="0 0 0.012" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+      <body name="fl_shoulder" pos="0.054 0.024 0">
+        <joint name="fl_1" type="hinge" axis="1 0 0" range="-0.1047197551 0.3141592654" />
+        <inertial mass="0.0171559814234" pos="0.001084470576 0.0005996856796 -0.03741114424" fullinertia="4.307659121e-06 3.909437951e-06 1.177529886e-06 -1.827410375e-08 -4.199043289e-07 -9.2045744e-08" />
+        <geom name="fl_shoulder_bracket" type="mesh" mesh="fl_shoulder_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="fl_roll_horn" type="mesh" mesh="fl_roll_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="fl_hip_MG90S" type="mesh" mesh="fl_hip_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="fl_shoulder_collision_0" type="box" size="0.0061 0.01125 0.0114" pos="0 -0.00125 -0.0426" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <geom name="fl_shoulder_collision_1" type="box" size="0.0015 0.006 0.0185" pos="0.011 0.002 -0.0185" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <body name="fl_thigh" pos="0 0.016 -0.037">
+          <joint name="fl_2" type="hinge" axis="0 1 0" range="-0.837758041 0.3490658504" />
+          <inertial mass="0.0174277595713" pos="0.0008068119681 -0.01315870807 -0.04503467837" fullinertia="4.878721752e-06 3.96530564e-06 1.698335013e-06 -1.092244822e-07 -4.01146999e-08 -1.153992655e-06" />
+          <geom name="fl_thigh_bracket" type="mesh" mesh="fl_thigh_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="fl_hip_horn" type="mesh" mesh="fl_hip_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="fl_knee_MG90S" type="mesh" mesh="fl_knee_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="fl_thigh_collision_0" type="box" size="0.005 0.00125 0.015" pos="0 0.00305 -0.017" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <geom name="fl_thigh_collision_1" type="box" size="0.0061 0.01125 0.0114" pos="0 -0.01725 -0.0496" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <body name="fl_shank" pos="0 0 -0.044">
+            <joint name="fl_3" type="hinge" axis="0 1 0" range="0.0872664626 1.483529864" />
+            <inertial mass="0.00248693251831" pos="2.949931231e-13 0.002922681153 -0.01868466929" fullinertia="7.196081843e-07 7.382120084e-07 3.714277955e-08 9.927656636e-20 1.146331928e-17 1.74278207e-08" />
+            <geom name="fl_lower_leg" type="mesh" mesh="fl_lower_leg" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="fl_knee_horn" type="mesh" mesh="fl_knee_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="fl_foot_pad" type="mesh" mesh="fl_foot_pad" rgba="0.15 0.18 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="fl_shank_collision_0" type="box" size="0.0045 0.00125 0.013" pos="0 0.00305 -0.019" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+            <site name="fl_foot" pos="0 0.00305 -0.038" size="0.006" />
+            <geom name="fl_shank_collision_1" type="sphere" size="0.005" pos="0 0.00305 -0.038" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          </body>
+        </body>
+      </body>
+      <body name="fr_shoulder" pos="0.054 -0.024 0">
+        <joint name="fr_1" type="hinge" axis="1 0 0" range="-0.3141592654 0.1047197551" />
+        <inertial mass="0.0171559814234" pos="0.001084470576 -0.0005996856796 -0.03741114424" fullinertia="4.307659121e-06 3.909437951e-06 1.177529886e-06 1.827410375e-08 -4.199043289e-07 9.2045744e-08" />
+        <geom name="fr_shoulder_bracket" type="mesh" mesh="fr_shoulder_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="fr_roll_horn" type="mesh" mesh="fr_roll_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="fr_hip_MG90S" type="mesh" mesh="fr_hip_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="fr_shoulder_collision_0" type="box" size="0.0061 0.01125 0.0114" pos="0 0.00125 -0.0426" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <geom name="fr_shoulder_collision_1" type="box" size="0.0015 0.006 0.0185" pos="0.011 -0.002 -0.0185" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <body name="fr_thigh" pos="0 -0.016 -0.037">
+          <joint name="fr_2" type="hinge" axis="0 1 0" range="-0.837758041 0.3490658504" />
+          <inertial mass="0.0174277595713" pos="0.0008068119681 0.01315870807 -0.04503467837" fullinertia="4.878721752e-06 3.96530564e-06 1.698335013e-06 1.092244822e-07 -4.01146999e-08 1.153992655e-06" />
+          <geom name="fr_thigh_bracket" type="mesh" mesh="fr_thigh_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="fr_hip_horn" type="mesh" mesh="fr_hip_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="fr_knee_MG90S" type="mesh" mesh="fr_knee_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="fr_thigh_collision_0" type="box" size="0.005 0.00125 0.015" pos="0 -0.00305 -0.017" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <geom name="fr_thigh_collision_1" type="box" size="0.0061 0.01125 0.0114" pos="0 0.01725 -0.0496" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <body name="fr_shank" pos="0 0 -0.044">
+            <joint name="fr_3" type="hinge" axis="0 1 0" range="0.0872664626 1.483529864" />
+            <inertial mass="0.00248693251831" pos="2.949931247e-13 -0.002922681153 -0.01868466929" fullinertia="7.196081843e-07 7.382120084e-07 3.714277955e-08 -9.9276541e-20 1.146331968e-17 -1.74278207e-08" />
+            <geom name="fr_lower_leg" type="mesh" mesh="fr_lower_leg" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="fr_knee_horn" type="mesh" mesh="fr_knee_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="fr_foot_pad" type="mesh" mesh="fr_foot_pad" rgba="0.15 0.18 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="fr_shank_collision_0" type="box" size="0.0045 0.00125 0.013" pos="0 -0.00305 -0.019" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+            <site name="fr_foot" pos="0 -0.00305 -0.038" size="0.006" />
+            <geom name="fr_shank_collision_1" type="sphere" size="0.005" pos="0 -0.00305 -0.038" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          </body>
+        </body>
+      </body>
+      <body name="bl_shoulder" pos="-0.054 0.024 0">
+        <joint name="bl_1" type="hinge" axis="1 0 0" range="-0.1047197551 0.3141592654" />
+        <inertial mass="0.0171559814234" pos="-0.001084470576 0.0005996856796 -0.03741114424" fullinertia="4.307659121e-06 3.909437951e-06 1.177529886e-06 1.827410375e-08 4.199043289e-07 -9.2045744e-08" />
+        <geom name="bl_shoulder_bracket" type="mesh" mesh="bl_shoulder_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="bl_roll_horn" type="mesh" mesh="bl_roll_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="bl_hip_MG90S" type="mesh" mesh="bl_hip_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="bl_shoulder_collision_0" type="box" size="0.0061 0.01125 0.0114" pos="0 -0.00125 -0.0426" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <geom name="bl_shoulder_collision_1" type="box" size="0.0015 0.006 0.0185" pos="-0.011 0.002 -0.0185" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <body name="bl_thigh" pos="0 0.016 -0.037">
+          <joint name="bl_2" type="hinge" axis="0 1 0" range="-0.837758041 0.3490658504" />
+          <inertial mass="0.0174277595713" pos="-0.0008068119681 -0.01315870807 -0.04503467837" fullinertia="4.878721752e-06 3.96530564e-06 1.698335013e-06 1.092244822e-07 4.01146999e-08 -1.153992655e-06" />
+          <geom name="bl_thigh_bracket" type="mesh" mesh="bl_thigh_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="bl_hip_horn" type="mesh" mesh="bl_hip_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="bl_knee_MG90S" type="mesh" mesh="bl_knee_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="bl_thigh_collision_0" type="box" size="0.005 0.00125 0.015" pos="0 0.00305 -0.017" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <geom name="bl_thigh_collision_1" type="box" size="0.0061 0.01125 0.0114" pos="0 -0.01725 -0.0496" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <body name="bl_shank" pos="0 0 -0.044">
+            <joint name="bl_3" type="hinge" axis="0 1 0" range="0.0872664626 1.483529864" />
+            <inertial mass="0.00248693251831" pos="-2.949931247e-13 0.002922681153 -0.01868466929" fullinertia="7.196081843e-07 7.382120084e-07 3.714277955e-08 -9.9276541e-20 -1.146331968e-17 1.74278207e-08" />
+            <geom name="bl_lower_leg" type="mesh" mesh="bl_lower_leg" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="bl_knee_horn" type="mesh" mesh="bl_knee_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="bl_foot_pad" type="mesh" mesh="bl_foot_pad" rgba="0.15 0.18 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="bl_shank_collision_0" type="box" size="0.0045 0.00125 0.013" pos="0 0.00305 -0.019" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+            <site name="bl_foot" pos="0 0.00305 -0.038" size="0.006" />
+            <geom name="bl_shank_collision_1" type="sphere" size="0.005" pos="0 0.00305 -0.038" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          </body>
+        </body>
+      </body>
+      <body name="br_shoulder" pos="-0.054 -0.024 0">
+        <joint name="br_1" type="hinge" axis="1 0 0" range="-0.3141592654 0.1047197551" />
+        <inertial mass="0.0171559814234" pos="-0.001084470576 -0.0005996856796 -0.03741114424" fullinertia="4.307659121e-06 3.909437951e-06 1.177529886e-06 -1.827410375e-08 4.199043289e-07 9.2045744e-08" />
+        <geom name="br_shoulder_bracket" type="mesh" mesh="br_shoulder_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="br_roll_horn" type="mesh" mesh="br_roll_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="br_hip_MG90S" type="mesh" mesh="br_hip_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+        <geom name="br_shoulder_collision_0" type="box" size="0.0061 0.01125 0.0114" pos="0 0.00125 -0.0426" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <geom name="br_shoulder_collision_1" type="box" size="0.0015 0.006 0.0185" pos="-0.011 -0.002 -0.0185" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+        <body name="br_thigh" pos="0 -0.016 -0.037">
+          <joint name="br_2" type="hinge" axis="0 1 0" range="-0.837758041 0.3490658504" />
+          <inertial mass="0.0174277595713" pos="-0.0008068119681 0.01315870807 -0.04503467837" fullinertia="4.878721752e-06 3.96530564e-06 1.698335013e-06 -1.092244822e-07 4.01146999e-08 1.153992655e-06" />
+          <geom name="br_thigh_bracket" type="mesh" mesh="br_thigh_bracket" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="br_hip_horn" type="mesh" mesh="br_hip_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="br_knee_MG90S" type="mesh" mesh="br_knee_MG90S" rgba="0.12 0.22 0.38 1" contype="0" conaffinity="0" group="1" mass="0" />
+          <geom name="br_thigh_collision_0" type="box" size="0.005 0.00125 0.015" pos="0 -0.00305 -0.017" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <geom name="br_thigh_collision_1" type="box" size="0.0061 0.01125 0.0114" pos="0 0.01725 -0.0496" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          <body name="br_shank" pos="0 0 -0.044">
+            <joint name="br_3" type="hinge" axis="0 1 0" range="0.0872664626 1.483529864" />
+            <inertial mass="0.00248693251831" pos="-2.949931247e-13 -0.002922681153 -0.01868466929" fullinertia="7.196081843e-07 7.382120084e-07 3.714277955e-08 9.9276541e-20 -1.146331968e-17 -1.74278207e-08" />
+            <geom name="br_lower_leg" type="mesh" mesh="br_lower_leg" rgba="0.81 0.86 0.91 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="br_knee_horn" type="mesh" mesh="br_knee_horn" rgba="0.18 0.19 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="br_foot_pad" type="mesh" mesh="br_foot_pad" rgba="0.15 0.18 0.2 1" contype="0" conaffinity="0" group="1" mass="0" />
+            <geom name="br_shank_collision_0" type="box" size="0.0045 0.00125 0.013" pos="0 -0.00305 -0.019" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+            <site name="br_foot" pos="0 -0.00305 -0.038" size="0.006" />
+            <geom name="br_shank_collision_1" type="sphere" size="0.005" pos="0 -0.00305 -0.038" rgba="0.8 0.15 0.1 0.25" group="3" mass="0" />
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="fl_1" joint="fl_1" ctrlrange="-0.1047197551 0.3141592654" />
+    <position name="fl_2" joint="fl_2" ctrlrange="-0.837758041 0.3490658504" />
+    <position name="fl_3" joint="fl_3" ctrlrange="0.0872664626 1.483529864" />
+    <position name="fr_1" joint="fr_1" ctrlrange="-0.3141592654 0.1047197551" />
+    <position name="fr_2" joint="fr_2" ctrlrange="-0.837758041 0.3490658504" />
+    <position name="fr_3" joint="fr_3" ctrlrange="0.0872664626 1.483529864" />
+    <position name="bl_1" joint="bl_1" ctrlrange="-0.1047197551 0.3141592654" />
+    <position name="bl_2" joint="bl_2" ctrlrange="-0.837758041 0.3490658504" />
+    <position name="bl_3" joint="bl_3" ctrlrange="0.0872664626 1.483529864" />
+    <position name="br_1" joint="br_1" ctrlrange="-0.3141592654 0.1047197551" />
+    <position name="br_2" joint="br_2" ctrlrange="-0.837758041 0.3490658504" />
+    <position name="br_3" joint="br_3" ctrlrange="0.0872664626 1.483529864" />
+  </actuator>
+  <sensor>
+    <touch name="fl_foot_contact" site="fl_foot" />
+    <touch name="fr_foot_contact" site="fr_foot" />
+    <touch name="bl_foot_contact" site="bl_foot" />
+    <touch name="br_foot_contact" site="br_foot" />
+    <gyro name="imu_gyro" site="imu" />
+    <accelerometer name="imu_accel" site="imu" />
+    <framequat name="ground_truth_orientation" objtype="site" objname="imu" />
+  </sensor>
+  <keyframe>
+    <key name="stand" qpos="0 0 0.1195837861 1 0 0 0 0 -0.3384389133 0.7330382858 0 -0.3384389133 0.7330382858 0 -0.3384389133 0.7330382858 0 -0.3384389133 0.7330382858" ctrl="0 -0.3384389133 0.7330382858 0 -0.3384389133 0.7330382858 0 -0.3384389133 0.7330382858 0 -0.3384389133 0.7330382858" />
+  </keyframe>
+</mujoco>
