@@ -41,7 +41,7 @@ void allOff() {
 }
 
 bool parseInt(const char *tok, long &out) {
-  if (tok == nullptr) return false;
+  if (tok == nullptr) return false; 
   char *end;
   out = strtol(tok, &end, 10);
   return *end == '\0';

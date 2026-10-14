@@ -1,0 +1,27 @@
+{
+  "model": "BNO085",
+  "raw_to_body": [
+    [
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      1
+    ]
+  ],
+  "gyro_bias_rad_s": [
+    0.00057,
+    -0.002523,
+    -0.00297
+  ],
+  "measured": "2026-10-13 14:59",
+  "note": "axis wizard: level, nose-up, left-turn"
+}

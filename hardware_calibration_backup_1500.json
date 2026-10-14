@@ -1,0 +1,141 @@
+{
+  "status": "MEASURED",
+  "pwm_hz": 50,
+  "imu": {
+    "model": null,
+    "orientation_in_body_rpy": [
+      0,
+      0,
+      0
+    ],
+    "position_mm": [
+      0,
+      0,
+      26
+    ],
+    "gyro_bias": null,
+    "accel_bias": null
+  },
+  "channels": [
+    {
+      "joint": "fl_1",
+      "channel": 0,
+      "zero_rad": 0.0,
+      "direction": 1,
+      "center_us": 1260,
+      "us_per_rad": 649.4,
+      "min_us": 1170,
+      "max_us": 1770
+    },
+    {
+      "joint": "fl_2",
+      "channel": 1,
+      "zero_rad": -0.3384389133413923,
+      "direction": 1,
+      "center_us": 1220,
+      "us_per_rad": 668.5,
+      "min_us": 550,
+      "max_us": 2030
+    },
+    {
+      "joint": "fl_3",
+      "channel": 2,
+      "zero_rad": 0.7330382858376184,
+      "direction": 1,
+      "center_us": 1500,
+      "us_per_rad": 706.6,
+      "min_us": 760,
+      "max_us": 2200
+    },
+    {
+      "joint": "fr_1",
+      "channel": 3,
+      "zero_rad": 0.0,
+      "direction": 1,
+      "center_us": 1550,
+      "us_per_rad": 687.5,
+      "min_us": 1090,
+      "max_us": 1640
+    },
+    {
+      "joint": "fr_2",
+      "channel": 4,
+      "zero_rad": -0.3384389133413923,
+      "direction": -1,
+      "center_us": 1910,
+      "us_per_rad": 725.7,
+      "min_us": 890,
+      "max_us": 2350
+    },
+    {
+      "joint": "fr_3",
+      "channel": 5,
+      "zero_rad": 0.7330382858376184,
+      "direction": -1,
+      "center_us": 970,
+      "us_per_rad": 611.2,
+      "min_us": 540,
+      "max_us": 2000
+    },
+    {
+      "joint": "bl_1",
+      "channel": 6,
+      "zero_rad": 0.0,
+      "direction": -1,
+      "center_us": 1410,
+      "us_per_rad": 725.7,
+      "min_us": 910,
+      "max_us": 1490
+    },
+    {
+      "joint": "bl_2",
+      "channel": 7,
+      "zero_rad": -0.3384389133413923,
+      "direction": 1,
+      "center_us": 1180,
+      "us_per_rad": 382.0,
+      "min_us": 630,
+      "max_us": 2080
+    },
+    {
+      "joint": "bl_3",
+      "channel": 8,
+      "zero_rad": 0.7330382858376184,
+      "direction": 1,
+      "center_us": 2150,
+      "us_per_rad": 668.5,
+      "min_us": 960,
+      "max_us": 2500
+    },
+    {
+      "joint": "br_1",
+      "channel": 9,
+      "zero_rad": 0.0,
+      "direction": -1,
+      "center_us": 1460,
+      "us_per_rad": 802.1,
+      "min_us": 1360,
+      "max_us": 2060
+    },
+    {
+      "joint": "br_2",
+      "channel": 10,
+      "zero_rad": -0.3384389133413923,
+      "direction": 1,
+      "center_us": 1590,
+      "us_per_rad": 878.5,
+      "min_us": 760,
+      "max_us": 2080
+    },
+    {
+      "joint": "br_3",
+      "channel": 11,
+      "zero_rad": 0.7330382858376184,
+      "direction": -1,
+      "center_us": 1360,
+      "us_per_rad": 687.5,
+      "min_us": 890,
+      "max_us": 2430
+    }
+  ]
+}
