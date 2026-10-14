@@ -1,0 +1,46 @@
+# Stage 3 task: walk forward over ~1 cm bars (no camera: the bars cannot be seen)
+# Uses scene_obstacle.xml (bars 8-12 mm high, every 25 cm) through env_obstacle.py /
+# vec_env_obstacle.py. Starts from walk_forward_gait.yaml and adds feet_clearance.
+# The robot is blind, so the way over is to lift every swing foot higher than the bars.
+
+task: walk_obstacle
+
+episode_length_s: 10.0        # 0.08 m/s x 10 s = 0.8 m -> 2-3 bars per episode
+
+target_height: 0.1196
+height_scale: 0.04
+
+target_vx: 0.08
+velocity_scale: 0.05
+
+fall_height: 0.05
+fall_upright: 0.6
+
+# Obstacle / action settings (env_obstacle.py)
+target_clearance: 0.02        # m, swing foot bottom this high = full feet_clearance (bars are <= 12 mm)
+spawn_x_range: [-0.2, 0.0]    # m, random start, first bar at x = 0.12
+action_scale:                 # rad per unit action, offset from the stand pose
+  roll: 0.15                  # ~9 deg  (roll range is only 24 deg)
+  hip: 0.3                    # ~17 deg
+  knee: 0.3                   # ~17 deg
+action_clip: 3.0              # |raw action| limit, about the full joint range at these scales
+
+reward_weights:
+  upright: 1.0
+  height: 0.5
+  velocity_track: 1.5         # walk_forward_gait: 1.0; stuck at a bar loses most of it
+  lateral_penalty: 0.3
+  yaw_penalty: 0.2
+  action_rate_penalty: 0.01
+  torque_penalty: 0.001
+  alive: 0.3
+  feet_air_time: 8.0
+  gait_symmetry: 0.3
+  feet_clearance: 0.5         # new: lift swing feet up to target_clearance
+
+# imu_noise: defaults from vec_env_imu.py (uncomment to override)
+#   gyro_noise_std: 0.005
+#   accel_noise_std: 0.05
+#   gyro_bias_max: 0.01
+#   accel_bias_max: 0.1
+#   max_latency_steps: 1
