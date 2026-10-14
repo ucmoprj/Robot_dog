@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BNO085 IMU Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Course stage 03 (IMU). Live view of the BNO085 through the esp32_imu_bridge firmware (Web Serial, Chrome/Edge),
+   or a scripted demo without hardware. Raw sensor axes, the same numbers imu_test.py shows before the axis wizard. */
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --panel-2: #f6f8fa;
+  --ink: #15202b;
+  --ink-2: #46525f;
+  --muted: #6f7b88;
+  --line: #d6dde5;
+  --accent: #2b59c3;
+  --accent-soft: #e2e9f8;
+  --ax-x: #d4433b;
+  --ax-y: #2f9e44;
+  --ax-z: #2b6fd6;
+  --acc: #c98a00;
+  --pcb: #3d4f9e;
+  --pcb-edge: #26336d;
+  --chip: #1d232b;
+  --good: #0ca30c;
+  --warning: #e0a100;
+  --critical: #d03b3b;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --panel: #161f28; --panel-2: #1b2530; --ink: #e6ecf2; --ink-2: #a8b3be;
+    --muted: #7f8b97; --line: #2b3643; --accent: #7b9cec; --accent-soft: #1d2a45;
+    --ax-x: #f0645b; --ax-y: #4cc463; --ax-z: #5b95f0; --acc: #f2b630;
+    --pcb: #4b5fbf; --pcb-edge: #2c3a80; --chip: #0b0e12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --panel: #161f28; --panel-2: #1b2530; --ink: #e6ecf2; --ink-2: #a8b3be;
+  --muted: #7f8b97; --line: #2b3643; --accent: #7b9cec; --accent-soft: #1d2a45;
+  --ax-x: #f0645b; --ax-y: #4cc463; --ax-z: #5b95f0; --acc: #f2b630;
+  --pcb: #4b5fbf; --pcb-edge: #2c3a80; --chip: #0b0e12; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15.5px; line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.08; margin: 0; }
+h1 { font-size: clamp(2.3rem, 6vw, 3.4rem); font-weight: 700; }
+h2 { font-size: 1.8rem; font-weight: 700; }
+h3 { font-size: 1.2rem; font-weight: 600; letter-spacing: 0.01em; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.x { color: var(--ax-x); } .y { color: var(--ax-y); } .z { color: var(--ax-z); } .acc { color: var(--acc); }
+
+header.hero { padding-block: 32px 18px; display: grid; gap: 10px; }
+header.hero .lede { color: var(--ink-2); font-size: 1.06rem; }
+
+.toolbar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.toolbar .wrap { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding-block: 10px; }
+button { font: 600 0.95rem var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme="dark"] button.primary { color: #0f151b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.primary { color: #0f151b; } }
+button.small { font-size: 0.82rem; padding: 4px 10px; }
+.chip { font-family: var(--f-mono); font-size: 0.8rem; border: 1px solid var(--line); background: var(--panel); padding: 4px 9px; border-radius: 4px; color: var(--ink-2); white-space: nowrap; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; vertical-align: 1px; }
+.dot.good { background: var(--good); } .dot.warn { background: var(--warning); } .dot.bad { background: var(--critical); }
+#status { flex: 1 1 240px; color: var(--ink-2); font-size: 0.92rem; }
+.spacer { flex: 1; }
+
+section { padding-block: 22px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.note { color: var(--ink-2); font-size: 0.93rem; }
+
+.grid-main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 860px) { .grid-main { grid-template-columns: 1fr; } }
+canvas { display: block; width: 100%; }
+#view3d { height: 420px; touch-action: none; cursor: grab; border-radius: 6px; background: var(--panel-2); }
+#view3d:active { cursor: grabbing; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.86rem; color: var(--ink-2); margin-top: 8px; }
+.legend b { font-family: var(--f-mono); font-weight: 500; }
+
+.state { font-family: var(--f-display); font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+.state-why { color: var(--ink-2); font-size: 0.92rem; margin-top: 4px; min-height: 2.8em; }
+
+table.read { width: 100%; border-collapse: collapse; font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 0.92rem; margin-top: 12px; }
+table.read th, table.read td { padding: 5px 6px; text-align: right; border-bottom: 1px solid var(--line); }
+table.read th:first-child, table.read td:first-child { text-align: left; color: var(--ink-2); font-family: var(--f-body); }
+table.read th { font-weight: 500; font-size: 0.8rem; color: var(--muted); }
+.raw { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); margin-top: 10px; overflow-wrap: anywhere; }
+
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+.sec-head { display: grid; gap: 6px; margin-bottom: 14px; }
+.sec-head .num { font-family: var(--f-mono); color: var(--accent); font-size: 0.82rem; letter-spacing: 0.06em; }
+
+.bars { display: grid; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 92px; align-items: center; gap: 10px; }
+.bar-row .lab { font-family: var(--f-mono); font-weight: 500; }
+.bar-row .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; font-size: 0.92rem; }
+.track { position: relative; height: 18px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.track .mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--muted); }
+.track .fill { position: absolute; top: 2px; bottom: 2px; border-radius: 2px; }
+.scale { display: grid; grid-template-columns: 26px minmax(0, 1fr) 92px; gap: 10px; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+.scale div:nth-child(2) { display: flex; justify-content: space-between; }
+
+.chart { height: 170px; margin-top: 14px; }
+.turned { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 12px; font-family: var(--f-mono); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+
+.level-wrap { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: center; }
+@media (max-width: 520px) { .level-wrap { grid-template-columns: 1fr; } }
+#level { height: 220px; max-width: 220px; }
+.gauge { margin-top: 8px; }
+.gauge .track { height: 22px; }
+.gauge .band { position: absolute; top: 0; bottom: 0; background: var(--accent-soft); }
+.gauge .g { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--good); }
+.gauge .needle { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--acc); border-radius: 2px; }
+
+.insight { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .insight { grid-template-columns: 1fr; } }
+.insight .panel { border-left: 4px solid var(--accent); }
+
+.tries { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.try { display: grid; gap: 6px; align-content: start; }
+.try .do { font-weight: 700; }
+.try .see { color: var(--ink-2); font-size: 0.93rem; }
+.try .why { color: var(--muted); font-size: 0.88rem; }
+
+ol.steps { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+pre.code { font-family: var(--f-mono); font-size: 0.84rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: 8px 0 0; }
+footer { padding-block: 28px 40px; color: var(--muted); font-size: 0.85rem; }
+
+.snap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 8px; }
+.snap { text-align: left; display: grid; gap: 2px; padding: 8px 10px; font-weight: 600; font-size: 0.9rem; line-height: 1.25; }
+.snap small { font-weight: 400; color: var(--muted); font-family: var(--f-mono); font-size: 0.72rem; }
+.snap.on { border-color: var(--accent); background: var(--accent-soft); }
+.notice { margin-top: 12px; border-left: 4px solid var(--accent); display: grid; gap: 6px; }
+.notice .nav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.table-scroll { overflow-x: auto; }
+table.compare { width: 100%; border-collapse: collapse; font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 0.86rem; min-width: 760px; }
+table.compare th, table.compare td { padding: 6px 7px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.compare th:first-child, table.compare td:first-child { text-align: left; font-family: var(--f-body); white-space: normal; }
+table.compare th { font-weight: 500; font-size: 0.76rem; color: var(--muted); }
+table.compare tbody tr { cursor: pointer; }
+table.compare tbody tr:hover { background: var(--panel-2); }
+table.compare tbody tr.on { background: var(--accent-soft); }
+table.compare td.cold { color: var(--muted); }
+table.compare td.hot { font-weight: 600; }
+table.compare tr.sep td { cursor: default; background: var(--panel); color: var(--muted); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; }
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <div class="eyebrow">Robot dog · course stage 03 · BNO085 IMU</div>
+  <h1>BNO085 IMU Viewer</h1>
+  <p class="lede">Move the sensor and watch what each number does. The page talks to the ESP32 running
+    <code>esp32_imu_bridge</code> over USB, or plays a demo if no hardware is connected.</p>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <button id="btnConnect" class="primary">Connect ESP32</button>
+    <button id="btnDemo">Run demo</button>
+    <button id="btnStop" disabled>Stop</button>
+    <button id="btnCapture" disabled title="Freeze the current live or demo moment and add it to the comparison table">Capture</button>
+    <span id="status"><span class="dot" id="statusDot"></span><span id="statusText">Not connected.</span></span>
+    <span class="chip" id="chipRate">— Hz</span>
+    <span class="chip" id="chipAge">age — ms</span>
+    <span class="chip" id="chipImu">IMU —</span>
+  </div>
+</div>
+
+<main class="wrap">
+
+<section>
+  <div class="sec-head">
+    <span class="num">SNAPSHOTS · FROZEN MOMENTS</span>
+    <h2>Pick one moment and study it</h2>
+    <p class="note">A snapshot freezes one pose of the sensor. Every panel on the page shows that moment and stays
+      still: the 3D board, the numbers, the bars, the spirit level, and the charts with the 10 seconds that led up
+      to it. Step through with Prev / Next or the ← → keys. The table under the board compares them all.</p>
+  </div>
+  <div class="snap-grid" id="snapGrid"></div>
+  <div class="panel notice" id="snapNotice">
+    <span class="eyebrow" id="snapCount">No snapshot selected</span>
+    <h3 id="snapName">Click a snapshot above</h3>
+    <p class="note" id="snapText">Run demo still plays the moving sequence. Snapshots are for looking closely.</p>
+    <div class="nav"><button class="small" id="btnPrev">← Prev</button><button class="small" id="btnNext">Next →</button></div>
+  </div>
+</section>
+
+<section>
+  <div class="grid-main">
+    <div class="panel">
+      <div class="panel-head">
+        <h3>The board, as the sensor sees itself</h3>
+        <span>
+          <button class="small" id="btnZeroYaw" title="Make the board's current heading the reference">Face forward</button>
+          <button class="small" id="btnResetView">Reset view</button>
+        </span>
+      </div>
+      <canvas id="view3d" aria-label="3D view of the BNO085 board with its x, y and z axes"></canvas>
+      <div class="legend">
+        <span><b class="x">x</b> sensor x axis</span>
+        <span><b class="y">y</b> sensor y axis</span>
+        <span><b class="z">z</b> sensor z axis</span>
+        <span><b class="acc">accel</b> what the accelerometer feels</span>
+        <span>Drag to look around.</span>
+      </div>
+      <p class="note" style="margin-top:8px">The orientation comes from the IMU's own fusion (game rotation vector, the
+        <code>q</code> values). Heading drifts slowly because there is no magnetometer, so “Face forward” resets it.</p>
+    </div>
+
+    <div class="panel">
+      <div class="eyebrow">Right now the sensor is</div>
+      <div class="state" id="stateName">waiting for data</div>
+      <div class="state-why" id="stateWhy">Connect the ESP32 or run the demo.</div>
+      <table class="read">
+        <thead><tr><th></th><th class="x">x</th><th class="y">y</th><th class="z">z</th></tr></thead>
+        <tbody>
+          <tr><td>gyro, deg/s</td><td id="gx">—</td><td id="gy">—</td><td id="gz">—</td></tr>
+          <tr><td>accel, m/s²</td><td id="ax">—</td><td id="ay">—</td><td id="az">—</td></tr>
+          <tr><td>tilt, deg</td><td id="tx">—</td><td id="ty">—</td><td id="tz">—</td></tr>
+        </tbody>
+      </table>
+      <table class="read">
+        <tbody>
+          <tr><td>|a| (size of accel)</td><td id="amag">—</td></tr>
+          <tr><td>age of newest gyro value</td><td id="age">—</td></tr>
+          <tr><td>IMU restarts by the watchdog</td><td id="restarts">—</td></tr>
+        </tbody>
+      </table>
+      <div class="raw">Last line from the ESP32:<br><span id="rawLine">—</span></div>
+      <p class="note" style="margin-top:10px"><b>tilt</b> = how far that axis end is raised above level, worked out
+        from gravity in the accel numbers. Only correct while the sensor is not being shaken.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Compare snapshots</h3>
+      <button class="small" id="btnClearCaps" disabled>Clear my captures</button>
+    </div>
+    <p class="note" style="margin-bottom:10px">Click a row to show it. Bold = clearly away from zero; grey = about zero
+      (noise). Use <b>Capture</b> during live or demo to add your own rows.</p>
+    <div class="table-scroll">
+      <table class="compare">
+        <thead><tr>
+          <th>Snapshot</th>
+          <th class="x">gyro x</th><th class="y">gyro y</th><th class="z">gyro z</th>
+          <th class="x">accel x</th><th class="y">accel y</th><th class="z">accel z</th>
+          <th>|a|</th><th class="z">turned z</th>
+        </tr></thead>
+        <tbody id="cmpBody"></tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:8px">gyro in deg/s, accel in m/s², turned z in degrees (gyro z added up over the
+      snapshot's 10 s).</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="num">01 · GYROSCOPE</span>
+    <h2>gyro = how fast it is turning</h2>
+    <p class="note">Each axis is a spin axis. A number is not an angle, it is a speed in degrees per second.
+      Turn the board and the bar jumps; stop turning and it falls back to 0, even if the board stays tilted.
+      Sign rule: point your right thumb along the + axis, your fingers curl in the + direction.</p>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><h3>Turning speed now</h3><span class="eyebrow">deg/s</span></div>
+      <div class="bars">
+        <div class="bar-row"><span class="lab x">x</span><div class="track"><div class="mid"></div><div class="fill" id="gbx"></div></div><span class="num" id="gnx">—</span></div>
+        <div class="bar-row"><span class="lab y">y</span><div class="track"><div class="mid"></div><div class="fill" id="gby"></div></div><span class="num" id="gny">—</span></div>
+        <div class="bar-row"><span class="lab z">z</span><div class="track"><div class="mid"></div><div class="fill" id="gbz"></div></div><span class="num" id="gnz">—</span></div>
+        <div class="scale"><div></div><div><span>−200</span><span>0</span><span>+200</span></div><div></div></div>
+      </div>
+      <div class="turned">
+        <span>Turned since reset:</span>
+        <span class="x" id="ix">x 0°</span><span class="y" id="iy">y 0°</span><span class="z" id="iz">z 0°</span>
+        <button class="small" id="btnResetTurn">Reset</button>
+      </div>
+      <p class="note" style="margin-top:8px">Adding up speed × time gives the angle turned. Lay the board flat, press
+        Reset, turn it a quarter turn: <span class="z">z</span> should read about 90°. Left alone, the sum slowly drifts:
+        that is why angles are never taken from the gyro alone.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Last 10 seconds</h3><span class="eyebrow">deg/s</span></div>
+      <canvas class="chart" id="chartGyro" aria-label="gyro x, y, z over the last 10 seconds"></canvas>
+      <p class="note" style="margin-top:8px">Spikes while moving, flat at 0 while still. The flat parts are the gyro
+        noise: on this board about ±0.3 deg/s.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="num">02 · ACCELEROMETER</span>
+    <h2>accel = where gravity points, plus every push</h2>
+    <p class="note">Even lying still, the sensor feels about 9.8 m/s² on the axis that points up: the table pushes it
+      up against gravity. Tilt the board and that 9.8 is shared between the axes. Shake it and extra pushes are added
+      on top.</p>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><h3>Spirit level</h3><span class="eyebrow">from accel x, y</span></div>
+      <div class="level-wrap">
+        <canvas id="level" aria-label="bubble level: the bubble moves toward the raised end"></canvas>
+        <div>
+          <p class="note">The bubble floats toward the end that is <b>raised</b>, like in a real spirit level.
+            Rings are 15°, 30°, 45°, 60°. If <span class="z">z</span> is negative, the board is upside down.</p>
+          <div class="gauge">
+            <div class="eyebrow" style="margin-bottom:4px">|a| = size of accel, 0 to 20 m/s²</div>
+            <div class="track"><div class="band" id="aband"></div><div class="g" id="ag"></div><div class="needle" id="aneedle"></div></div>
+            <p class="note" style="margin-top:6px">Green line = 9.81 (gravity). Inside the shaded band = no extra push,
+              so the tilt numbers can be trusted. Outside = the board is being moved, bumped or shaken.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Last 10 seconds</h3><span class="eyebrow">m/s²</span></div>
+      <canvas class="chart" id="chartAcc" aria-label="accel x, y, z over the last 10 seconds"></canvas>
+      <p class="note" style="margin-top:8px">Tilting moves the lines to new levels and they <b>stay</b> there. Shaking
+        makes them jitter around those levels.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="num">03 · THE KEY DIFFERENCE</span>
+    <h2>Tilt and hold: gyro forgets, accel remembers</h2>
+  </div>
+  <div class="insight">
+    <div class="panel">
+      <h3><span class="x">gyro</span> answers “is it turning, and how fast?”</h3>
+      <p class="note" style="margin-top:6px">Quick and clean, and not fooled by shaking. But it only knows about change:
+        a board held tilted at 30° reads 0. For a walking robot this is the fast signal for “I am starting to fall”.</p>
+    </div>
+    <div class="panel">
+      <h3><span class="acc">accel</span> answers “which way is down?”</h3>
+      <p class="note" style="margin-top:6px">Knows the tilt even when nothing moves. But every step, bump and shake is
+        mixed into it. For a walking robot this is the slow signal for “I am leaning”.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px">The trained policy gets both, 50 times a second: 3 gyro numbers (rad/s) and
+    3 accel numbers (m/s²). The BNO085 also blends them itself into the orientation <code>q</code> that turns the 3D
+    board above.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="num">04 · TRY THIS</span>
+    <h2>Five moves, one at a time</h2>
+  </div>
+  <div class="tries">
+    <div class="panel try">
+      <div class="do">1. Leave it flat on the table.</div>
+      <div class="see">gyro ≈ 0 on all axes. accel ≈ (0, 0, +9.8) if the chip side faces up. |a| on the green line.</div>
+      <div class="why">Only gravity acts. Small offsets (like −0.6) mean the board or table is a few degrees off level.</div>
+    </div>
+    <div class="panel try">
+      <div class="do">2. Slowly raise the +x end about 30°, hold it.</div>
+      <div class="see">While moving: gyro y goes negative. Holding: gyro back to 0, accel x ≈ +4.9, tilt x ≈ +30°, the bubble moves to +x.</div>
+      <div class="why">sin(30°) × 9.8 = 4.9: part of gravity now falls on x.</div>
+    </div>
+    <div class="panel try">
+      <div class="do">3. Turn it flat on the table, a quarter turn to the left.</div>
+      <div class="see">gyro z positive while turning. accel does not change. Turned z ≈ +90°.</div>
+      <div class="why">Turning around the up axis does not change where gravity points, so only the gyro sees it.</div>
+    </div>
+    <div class="panel try">
+      <div class="do">4. Shake it quickly side to side.</div>
+      <div class="see">accel and |a| jump far from 9.8. The tilt numbers become nonsense for that moment.</div>
+      <div class="why">The pushes from your hand add to gravity. This is what walking does to the robot's accel.</div>
+    </div>
+    <div class="panel try">
+      <div class="do">5. Turn it upside down.</div>
+      <div class="see">accel z ≈ −9.8, “upside down” shows. The 3D board flips.</div>
+      <div class="why">Your robot's mount may be like this. The axis wizard finds out and fixes the signs.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="num">05 · SENSOR AXES vs ROBOT AXES</span>
+    <h2>These are the board's axes, not the robot's yet</h2>
+    <p class="note">The x, y, z here are printed on the BNO085 board. The simulation uses robot axes:
+      <b>x = toward the head, y = robot's left, z = up</b>. The axis wizard in <code>imu_test.py</code> (key
+      <code>a</code>) works out how the board is mounted and saves it to <code>hardware_imu.json</code>; from then on
+      the Python tools convert every sample to robot axes.</p>
+  </div>
+  <div class="panel">
+    <h3>How to use this page</h3>
+    <ol class="steps" style="margin-top:8px">
+      <li>Flash <code>hardware/esp32_imu_bridge</code> to the ESP32 (once).</li>
+      <li>Close every other program on COM4: <code>imu_test.py</code>, <code>motion_test.py</code>, the Arduino Serial Monitor.</li>
+      <li>Open this file in <b>Chrome or Edge</b> (Web Serial does not work in Firefox or Safari).</li>
+      <li>Click <b>Connect ESP32</b>, pick the COM4 port, click Connect. The ESP32 restarts, then data starts in about 2 s.</li>
+      <li>Click <b>Stop</b> before running a Python tool again, so the port is free.</li>
+    </ol>
+    <p class="note" style="margin-top:10px">If the Connect button says Web Serial is not available, serve the page
+      from the project folder and open it through localhost:</p>
+    <pre class="code">python -m http.server 8000
+# then open http://localhost:8000/docs/imu_viewer.html</pre>
+    <p class="note" style="margin-top:10px">What the page sends: <code>?</code> (ready check), <code>S</code> (IMU
+      status), <code>I</code> about 50 times a second (one sample), <code>R</code> every 2 s (watchdog restarts). It
+      never sends a servo command.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">Robot dog course · stage 03 · reads the esp32_imu_bridge protocol:
+  <code>I gx gy gz ax ay az qw qx qy qz age_ms</code> (gyro rad/s, accel m/s² with gravity).</footer>
+
+<script>
+"use strict";
+const G = 9.80665;
+const RAD = 180 / Math.PI;
+const $ = (id) => document.getElementById(id);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+// ---------- quaternion helpers (w, x, y, z); q rotates sensor-frame vectors into the world frame ----------
+const qmul = (a, b) => [
+  a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3],
+  a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2],
+  a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1],
+  a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0],
+];
+const qconj = (q) => [q[0], -q[1], -q[2], -q[3]];
+const qnorm = (q) => { const n = Math.hypot(...q) || 1; return q.map((v) => v / n); };
+const cross = (a, b) => [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]];
+const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+function qrot(q, v) {
+  const u = [q[1], q[2], q[3]], t = cross(u, v).map((c) => 2 * c), ut = cross(u, t);
+  return [v[0] + q[0]*t[0] + ut[0], v[1] + q[0]*t[1] + ut[1], v[2] + q[0]*t[2] + ut[2]];
+}
+const yawOf = (q) => Math.atan2(2 * (q[0]*q[3] + q[1]*q[2]), 1 - 2 * (q[2]*q[2] + q[3]*q[3]));
+
+// ---------- shared state ----------
+const HISTORY_S = 10;
+const hist = [];            // {t, g:[deg/s], a:[m/s²]}
+let latest = null;          // {g (rad/s), a, q, age}
+let yawRef = null;          // heading that counts as "forward" in the 3D view
+let turned = [0, 0, 0];     // integrated gyro, deg
+let lastT = null;
+let rateCount = 0, rate = 0;
+let mode = "idle";          // idle | serial | demo
+let imuRestarts = null;
+
+function setStatus(text, level) {
+  $("statusText").textContent = text;
+  $("statusDot").className = "dot" + (level ? " " + level : "");
+}
+
+function onSample(g, a, q, age, raw) {
+  const t = performance.now() / 1000;
+  if (lastT !== null) {
+    const dt = Math.min(t - lastT, 0.2);
+    for (let i = 0; i < 3; i++) turned[i] += g[i] * RAD * dt;
+  }
+  lastT = t;
+  latest = { g, a, q: qnorm(q), age };
+  if (yawRef === null) yawRef = yawOf(latest.q);
+  hist.push({ t, g: g.map((v) => v * RAD), a: a.slice() });
+  while (hist.length && t - hist[0].t > HISTORY_S) hist.shift();
+  rateCount++;
+  if (raw) $("rawLine").textContent = raw;
+}
+setInterval(() => { rate = rateCount; rateCount = 0; }, 1000);
+
+function resetSession() {
+  hist.length = 0; latest = null; yawRef = null; lastT = null; turned = [0, 0, 0]; imuRestarts = null;
+}
+
+// ---------- Web Serial link to esp32_imu_bridge ----------
+const serial = {
+  port: null, reader: null, writer: null, ready: false, pending: false, pendingAt: 0, lastR: 0,
+  buf: "", lastCmd: "", timer: null, readyTimer: null,
+};
+const enc = new TextEncoder();
+
+async function send(line) {
+  if (!serial.writer) return;
+  serial.lastCmd = line;
+  try { await serial.writer.write(enc.encode(line + "\n")); } catch (e) { /* port closing */ }
+}
+
+function handleLine(line) {
+  if (!line) return;
+  if (line.startsWith("I ")) {
+    const p = line.split(/\s+/);
+    serial.pending = false;
+    if (p.length !== 12) return;
+    const v = p.slice(1).map(Number);
+    if (v.some((n) => !Number.isFinite(n))) return;
+    onSample(v.slice(0, 3), v.slice(3, 6), v.slice(6, 10), v[10], line);
+  } else if (line === "READY") {
+    if (!serial.ready) {
+      serial.ready = true;
+      clearInterval(serial.readyTimer);
+      setStatus("ESP32 ready. Asking the IMU…", "warn");
+      send("S");
+    }
+  } else if (line.startsWith("IMU OK")) {
+    $("chipImu").textContent = line.replace("IMU OK", "IMU").trim();
+    setStatus("Streaming. Move the sensor.", "good");
+  } else if (line === "IMU NONE" || line === "ERR no imu") {
+    serial.pending = false;
+    $("chipImu").textContent = "IMU not found";
+    setStatus("ESP32 answers, but no BNO085 on I2C. Check VIN→3V3, GND, SDA→GPIO21, SCL→GPIO22.", "bad");
+  } else if (line.startsWith("RESTARTS")) {
+    serial.pending = false;
+    imuRestarts = parseInt(line.split(/\s+/)[1], 10);
+  } else if (line.startsWith("ERR unknown command")) {
+    serial.pending = false;
+    if (serial.lastCmd === "S" || serial.lastCmd === "I") {
+      setStatus("The ESP32 has the servo-only firmware. Flash hardware/esp32_imu_bridge.", "bad");
+      $("chipImu").textContent = "wrong firmware";
+    }
+    // "R" unknown = firmware from before the watchdog: just stop asking
+    if (serial.lastCmd === "R") serial.lastR = Infinity;
+  } else if (line.startsWith("ERR")) {
+    serial.pending = false;
+  }
+}
+
+async function readLoop() {
+  const dec = new TextDecoder();
+  while (serial.port && serial.port.readable) {
+    serial.reader = serial.port.readable.getReader();
+    try {
+      for (;;) {
+        const { value, done } = await serial.reader.read();
+        if (done) break;
+        serial.buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = serial.buf.indexOf("\n")) >= 0) {
+          handleLine(serial.buf.slice(0, i).replace(/\r$/, "").trim());
+          serial.buf = serial.buf.slice(i + 1);
+        }
+        if (serial.buf.length > 4096) serial.buf = "";
+      }
+    } catch (e) {
+      if (mode === "serial") setStatus("Serial read error: " + e.message, "bad");
+    } finally {
+      serial.reader.releaseLock();
+      serial.reader = null;
+    }
+    if (mode !== "serial") break;
+  }
+}
+
+async function connectSerial() {
+  if (!("serial" in navigator)) {
+    setStatus("Web Serial is not available here. Use Chrome or Edge, or open the page via localhost (see section 05).", "bad");
+    return;
+  }
+  let port;
+  try { port = await navigator.serial.requestPort(); }
+  catch (e) { setStatus("No port chosen.", ""); return; }
+  stopAll();
+  try { await port.open({ baudRate: 115200 }); }
+  catch (e) {
+    setStatus("Could not open the port. Is COM4 used by imu_test.py, motion_test.py or the Serial Monitor? Close it and try again.", "bad");
+    return;
+  }
+  resetSession();
+  mode = "serial";
+  Object.assign(serial, { port, writer: port.writable.getWriter(), ready: false, pending: false, buf: "", lastR: 0 });
+  setButtons();
+  setStatus("Port open. Waiting for the ESP32 to boot…", "warn");
+  readLoop();
+  // Opening the port restarts the ESP32; it prints READY when done. Also ask, in case it did not restart.
+  serial.readyTimer = setInterval(() => send("?"), 700);
+  serial.timer = setInterval(() => {
+    if (!serial.ready) return;
+    const now = performance.now();
+    if (serial.pending && now - serial.pendingAt < 300) return;
+    serial.pending = true;
+    serial.pendingAt = now;
+    if (now - serial.lastR > 2000) { serial.lastR = now; send("R"); }
+    else send("I");
+  }, 20);
+}
+
+async function closeSerial() {
+  clearInterval(serial.timer); clearInterval(serial.readyTimer);
+  const { port, reader, writer } = serial;
+  serial.port = null;
+  try { if (reader) await reader.cancel(); } catch (e) {}
+  try { if (writer) writer.releaseLock(); } catch (e) {}
+  try { if (port) await port.close(); } catch (e) {}
+  serial.writer = null;
+}
+
+if ("serial" in navigator) {
+  navigator.serial.addEventListener("disconnect", () => {
+    if (mode === "serial") { stopAll(); setStatus("USB cable unplugged.", "bad"); }
+  });
+}
+
+// ---------- demo: a scripted sequence of the five moves ----------
+const DEMO = [
+  { s: 2.0, w: [0, 0, 0], label: "Lying flat and still" },
+  { s: 1.0, w: [0, -30, 0], label: "Raising the +x end (turning about y)" },
+  { s: 1.8, w: [0, 0, 0], label: "Holding +x end up 30°" },
+  { s: 1.0, w: [0, 30, 0], label: "Lowering the +x end" },
+  { s: 1.0, w: [30, 0, 0], label: "Raising the +y end (turning about x)" },
+  { s: 1.8, w: [0, 0, 0], label: "Holding +y end up 30°" },
+  { s: 1.0, w: [-30, 0, 0], label: "Lowering the +y end" },
+  { s: 1.0, w: [0, 0, 90], label: "Turning left a quarter turn (about z)" },
+  { s: 1.5, w: [0, 0, 0], label: "Still, facing a new way" },
+  { s: 1.0, w: [0, 0, -90], label: "Turning back" },
+  { s: 1.8, w: [0, 0, 0], label: "Shaking side to side", shake: true },
+  { s: 1.0, w: [0, 0, 0], label: "Still again" },
+  { s: 1.5, w: [120, 0, 0], label: "Rolling it upside down" },
+  { s: 2.0, w: [0, 0, 0], label: "Upside down, still" },
+  { s: 1.5, w: [120, 0, 0], label: "Rolling it back" },
+];
+const demo = { timer: null, q: [1, 0, 0, 0], step: 0, stepT: 0, t: 0 };
+
+// One 'dt' of simulated sensor: turn by seg.w (deg/s, sensor frame), then make the readings.
+// rnd = random source (Math.random for the demo, a seeded one for snapshots so they never change).
+function simStep(sim, seg, dt, rnd) {
+  const noise = (s) => (rnd() * 2 - 1) * s;
+  const w = seg.w.map((d) => d / RAD);                   // rad/s, sensor frame
+  const th = Math.hypot(...w) * dt;
+  if (th > 0) {
+    const s = Math.sin(th / 2) / Math.hypot(...w);
+    sim.q = qnorm(qmul(sim.q, [Math.cos(th / 2), w[0]*s, w[1]*s, w[2]*s]));
+  }
+  sim.t += dt;
+  let a = qrot(qconj(sim.q), [0, 0, G]);                 // still: the accel feels "up"
+  if (seg.shake) a = [a[0] + 7 * Math.sin(sim.t * 2 * Math.PI * 4), a[1] + 2.5 * Math.sin(sim.t * 2 * Math.PI * 4 + 1), a[2] + noise(1.2)];
+  if (seg.fall) a = [0, 0, 0];                           // free fall: nothing pushes the sensor
+  a = a.map((v) => v + noise(0.04));
+  const g = w.map((v) => v + noise(0.004) + (seg.shake ? noise(0.6) : 0));
+  return { g, a, q: sim.q.slice(), age: Math.floor(rnd() * 9) };
+}
+function rawLine(s) {
+  const f = (v, n) => v.toFixed(n);
+  return `I ${s.g.map((v) => f(v, 5)).join(" ")} ${s.a.map((v) => f(v, 4)).join(" ")} ${s.q.map((v) => f(v, 5)).join(" ")} ${s.age}`;
+}
+
+function startDemo() {
+  stopAll();
+  resetSession();
+  mode = "demo";
+  Object.assign(demo, { q: [1, 0, 0, 0], step: 0, stepT: 0, t: 0 });
+  $("chipImu").textContent = "IMU demo";
+  setButtons();
+  const dt = 0.02;
+  demo.timer = setInterval(() => {
+    const st = DEMO[demo.step];
+    const smp = simStep(demo, st, dt, Math.random);
+    onSample(smp.g, smp.a, smp.q, smp.age, rawLine(smp));
+    imuRestarts = 0;
+    setStatus("Demo: " + st.label, "good");
+    demo.stepT += dt;
+    if (demo.stepT >= st.s) { demo.stepT = 0; demo.step = (demo.step + 1) % DEMO.length; if (demo.step === 0) demo.q = [1, 0, 0, 0]; }
+  }, dt * 1000);
+}
+
+function stopAll() {
+  if (mode === "demo") clearInterval(demo.timer);
+  if (mode === "serial") closeSerial();
+  mode = "idle";
+  snapIdx = -1;
+  markSnap();
+  setButtons();
+  setStatus("Stopped.", "");
+}
+
+function setButtons() {
+  $("btnStop").disabled = mode === "idle";
+  $("btnConnect").disabled = mode === "serial";
+  $("btnDemo").disabled = mode === "demo";
+  $("btnCapture").disabled = !(mode === "serial" || mode === "demo");
+  $("btnClearCaps").disabled = captures.length === 0;
+}
+
+// ---------- snapshots: frozen moments, built with the same simulation as the demo ----------
+const STILL = (s) => ({ s, w: [0, 0, 0] });
+const PRESETS = [
+  { name: "Flat, still", tag: "baseline", segs: [STILL(3)],
+    text: "The baseline. gyro ≈ 0 on every axis. accel ≈ (0, 0, +9.8): all of gravity is on z, the axis that points up. |a| sits on 9.8." },
+  { name: "Raising the +x end (moving)", tag: "moving", segs: [STILL(2), { s: 0.5, w: [0, -30, 0] }],
+    text: "Caught halfway up (15°). gyro y ≈ −30 deg/s: the board is turning about its y axis. accel x has started to grow (≈ +2.5 = 9.8 × sin 15°)." },
+  { name: "+x end up 30°, held", tag: "held", segs: [STILL(2), { s: 1, w: [0, -30, 0] }, STILL(2)],
+    text: "Same movement, now stopped. gyro is back to 0 although the board is still tilted. accel x ≈ +4.9 (9.8 × sin 30°), accel z ≈ +8.5 (9.8 × cos 30°). In the charts: a gyro bump, then an accel step that stays." },
+  { name: "+x end down 30°, held", tag: "held", segs: [STILL(2), { s: 1, w: [0, 30, 0] }, STILL(2)],
+    text: "The mirror image: accel x ≈ −4.9. The sign tells which end is raised. While it moved, gyro y was +30 instead of −30." },
+  { name: "+y end up 30°, held", tag: "held", segs: [STILL(2), { s: 1, w: [30, 0, 0] }, STILL(2)],
+    text: "Now the shift is on y: accel y ≈ +4.9. The movement was a turn about x (gyro x was +30 in the chart)." },
+  { name: "Standing on its +x end (90°)", tag: "held", segs: [STILL(2), { s: 1, w: [0, -90, 0] }, STILL(2)],
+    text: "All of gravity moved from z to x: accel ≈ (+9.8, 0, 0). Whichever axis points up reads +9.8." },
+  { name: "On its side, +y end up (90°)", tag: "held", segs: [STILL(2), { s: 1, w: [90, 0, 0] }, STILL(2)],
+    text: "accel ≈ (0, +9.8, 0). Compare with the last one: same idea, different axis." },
+  { name: "Turning left (moving)", tag: "moving", segs: [STILL(2), { s: 0.5, w: [0, 0, 90] }],
+    text: "Turning flat on the table: gyro z ≈ +90 deg/s (left = + about z). accel does not change at all: gravity still goes straight through z." },
+  { name: "After a left quarter turn, held", tag: "held", segs: [STILL(2), { s: 1, w: [0, 0, 90] }, STILL(2)],
+    text: "Compare this row with “Flat, still”: gyro and accel are the same! Only “turned z ≈ +90°” shows the turn. accel cannot see heading; only the gyro, added up over time, can." },
+  { name: "Upside down", tag: "held", segs: [STILL(2), { s: 1.5, w: [120, 0, 0] }, STILL(2)],
+    text: "accel z ≈ −9.8: the z axis now points down. The spirit-level bubble turns red." },
+  { name: "Shaking (peak moment)", tag: "moving", segs: [STILL(2), { s: 1, w: [0, 0, 0], shake: true }], pick: "peak",
+    text: "Your hand adds pushes: accel x swings by about ±7 and |a| is far from 9.8. In this moment the tilt numbers are wrong: accel alone cannot tell a shake from a tilt." },
+  { name: "Falling (free fall)", tag: "moving", segs: [STILL(2), { s: 0.3, w: [0, 0, 0], fall: true }],
+    text: "Nothing pushes the sensor while it falls, so accel ≈ (0, 0, 0) and |a| ≈ 0, although gravity is still there. The accelerometer measures pushes, not gravity itself." },
+];
+
+function mulberry32(seed) {
+  return () => {
+    seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildSnapshot(p, k) {
+  const rnd = mulberry32(1000 + k), sim = { q: [1, 0, 0, 0], t: 0 }, dt = 0.02;
+  const rows = [], sum = [0, 0, 0];
+  let lastSegStart = 0;
+  for (const seg of p.segs) {
+    lastSegStart = rows.length;
+    for (let i = 0; i < Math.round(seg.s / dt); i++) {
+      const smp = simStep(sim, seg, dt, rnd);
+      for (let j = 0; j < 3; j++) sum[j] += smp.g[j] * RAD * dt;
+      rows.push({ t: sim.t, smp, turned: sum.slice() });
+    }
+  }
+  let end = rows.length - 1;
+  if (p.pick === "peak") {
+    for (let i = lastSegStart; i < rows.length; i++) {
+      const off = (r) => Math.abs(Math.hypot(...r.smp.a) - G);
+      if (off(rows[i]) > off(rows[end])) end = i;
+    }
+  }
+  const last = rows[end];
+  return {
+    name: p.name, tag: p.tag, text: p.text,
+    latest: { g: last.smp.g, a: last.smp.a, q: last.smp.q, age: last.smp.age },
+    hist: rows.slice(0, end + 1).filter((r) => last.t - r.t <= HISTORY_S)
+      .map((r) => ({ t: r.t, g: r.smp.g.map((v) => v * RAD), a: r.smp.a.slice() })),
+    turned: last.turned, yawRef: 0, restarts: 0, raw: rawLine(last.smp),
+  };
+}
+
+const presetSnaps = PRESETS.map(buildSnapshot);
+const captures = [];
+let snapIdx = -1;
+const allSnaps = () => presetSnaps.concat(captures);
+
+function showSnapshot(i) {
+  const list = allSnaps();
+  if (!list.length) return;
+  i = (i + list.length) % list.length;
+  if (mode !== "idle" && mode !== "snapshot") stopAll();
+  const s = list[i];
+  mode = "snapshot";
+  snapIdx = i;
+  latest = { g: s.latest.g.slice(), a: s.latest.a.slice(), q: s.latest.q.slice(), age: s.latest.age };
+  hist.length = 0;
+  for (const h of s.hist) hist.push({ t: h.t, g: h.g.slice(), a: h.a.slice() });
+  turned = s.turned.slice();
+  yawRef = s.yawRef;
+  lastT = null;
+  imuRestarts = s.restarts;
+  $("rawLine").textContent = s.raw;
+  $("chipImu").textContent = "IMU snapshot";
+  setStatus(`Snapshot ${i + 1} of ${list.length}: ${s.name} (frozen)`, "good");
+  $("snapCount").textContent = `Snapshot ${i + 1} of ${list.length} · ${s.tag}`;
+  $("snapName").textContent = s.name;
+  $("snapText").textContent = s.text;
+  markSnap();
+  setButtons();
+}
+
+function markSnap() {
+  document.querySelectorAll(".snap").forEach((b, k) => b.classList.toggle("on", k === snapIdx));
+  document.querySelectorAll("#cmpBody tr[data-i]").forEach((r) => r.classList.toggle("on", +r.dataset.i === snapIdx));
+}
+
+function buildSnapUi() {
+  const grid = $("snapGrid");
+  grid.innerHTML = "";
+  allSnaps().forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "snap";
+    b.innerHTML = `<small>${i + 1} · ${s.tag}</small><span></span>`;
+    b.lastChild.textContent = s.name;
+    b.onclick = () => showSnapshot(i);
+    grid.appendChild(b);
+  });
+  const body = $("cmpBody");
+  body.innerHTML = "";
+  const cell = (v, n, hot, axis) => {
+    const td = document.createElement("td");
+    td.textContent = sgn(v, n);
+    td.className = Math.abs(v) >= hot ? "hot " + axis : "cold";
+    return td;
+  };
+  allSnaps().forEach((s, i) => {
+    if (i === presetSnaps.length) {
+      const sep = document.createElement("tr");
+      sep.className = "sep";
+      sep.innerHTML = `<td colspan="9">My captures</td>`;
+      body.appendChild(sep);
+    }
+    const tr = document.createElement("tr");
+    tr.dataset.i = i;
+    const name = document.createElement("td");
+    name.textContent = `${i + 1}. ${s.name}`;
+    tr.appendChild(name);
+    const gd = s.latest.g.map((v) => v * RAD), a = s.latest.a, amag = Math.hypot(...a);
+    gd.forEach((v, k) => tr.appendChild(cell(v, 1, 5, "xyz"[k])));
+    a.forEach((v, k) => tr.appendChild(cell(v, 2, 1.5, "xyz"[k])));
+    const m = document.createElement("td");
+    m.textContent = amag.toFixed(2);
+    m.className = Math.abs(amag - G) > 1 ? "hot acc" : "cold";
+    tr.appendChild(m);
+    tr.appendChild(cell(s.turned[2], 0, 10, "z"));
+    tr.onclick = () => showSnapshot(i);
+    body.appendChild(tr);
+  });
+  markSnap();
+}
+
+function captureNow() {
+  if (!latest) return;
+  const src = mode === "serial" ? "live" : "demo";
+  const n = captures.length + 1;
+  captures.push({
+    name: `My capture ${n} (${src}, ${new Date().toLocaleTimeString()})`, tag: src,
+    text: `Captured from the ${src === "live" ? "real sensor" : "demo"}. Compare its row with the preset snapshots to find the closest match.`,
+    latest: { g: latest.g.slice(), a: latest.a.slice(), q: latest.q.slice(), age: latest.age },
+    hist: hist.map((h) => ({ t: h.t, g: h.g.slice(), a: h.a.slice() })),
+    turned: turned.slice(), yawRef, restarts: imuRestarts, raw: $("rawLine").textContent,
+  });
+  buildSnapUi();
+  setButtons();
+  setStatus(`Captured as snapshot ${presetSnaps.length + n}. Click it to study it; the ${src} view keeps running.`, "good");
+}
+
+$("btnConnect").onclick = connectSerial;
+$("btnDemo").onclick = startDemo;
+$("btnStop").onclick = stopAll;
+$("btnCapture").onclick = captureNow;
+$("btnClearCaps").onclick = () => {
+  if (snapIdx >= presetSnaps.length) stopAll();
+  captures.length = 0;
+  buildSnapUi();
+  setButtons();
+};
+$("btnPrev").onclick = () => showSnapshot(snapIdx < 0 ? 0 : snapIdx - 1);
+$("btnNext").onclick = () => showSnapshot(snapIdx < 0 ? 0 : snapIdx + 1);
+document.addEventListener("keydown", (e) => {
+  if (mode !== "snapshot" || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === "ArrowLeft") { showSnapshot(snapIdx - 1); e.preventDefault(); }
+  if (e.key === "ArrowRight") { showSnapshot(snapIdx + 1); e.preventDefault(); }
+});
+$("btnZeroYaw").onclick = () => { if (latest) yawRef = yawOf(latest.q); };
+$("btnResetTurn").onclick = () => { turned = [0, 0, 0]; };
+if (!("serial" in navigator)) $("btnConnect").title = "Web Serial needs Chrome or Edge";
+
+// ---------- canvas helpers ----------
+function fitCanvas(c) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  }
+  const ctx = c.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+// ---------- 3D board view ----------
+const cam = { az: 35 / RAD, el: 32 / RAD };
+const view = $("view3d");
+(() => {
+  let drag = null;
+  view.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, az: cam.az, el: cam.el }; view.setPointerCapture(e.pointerId); });
+  view.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    cam.az = drag.az - (e.clientX - drag.x) * 0.01;
+    cam.el = Math.max(-1.3, Math.min(1.45, drag.el + (e.clientY - drag.y) * 0.01));
+  });
+  const end = () => { drag = null; };
+  view.addEventListener("pointerup", end);
+  view.addEventListener("pointercancel", end);
+})();
+$("btnResetView").onclick = () => { cam.az = 35 / RAD; cam.el = 32 / RAD; };
+
+const BOARD = [1.25, 0.85, 0.07];  // half sizes in sensor frame (x long)
+const BOX_FACES = [
+  { n: [0, 0, 1], v: [[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]], top: true },
+  { n: [0, 0, -1], v: [[-1,-1,-1],[-1,1,-1],[1,1,-1],[1,-1,-1]] },
+  { n: [1, 0, 0], v: [[1,-1,-1],[1,1,-1],[1,1,1],[1,-1,1]] },
+  { n: [-1, 0, 0], v: [[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1]] },
+  { n: [0, 1, 0], v: [[-1,1,-1],[-1,1,1],[1,1,1],[1,1,-1]] },
+  { n: [0, -1, 0], v: [[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1]] },
+];
+
+function drawView() {
+  const { ctx, w, h } = fitCanvas(view);
+  ctx.clearRect(0, 0, w, h);
+  const camDir = [Math.cos(cam.el) * Math.cos(cam.az), Math.cos(cam.el) * Math.sin(cam.az), Math.sin(cam.el)];
+  const fwd = camDir.map((v) => -v);
+  let right = cross(fwd, [0, 0, 1]);
+  const rn = Math.hypot(...right) || 1; right = right.map((v) => v / rn);
+  const up = cross(right, fwd);
+  const scale = Math.min(w, h) * 0.95, D = 7;
+  const proj = (p) => {
+    const depth = dot(p, camDir), k = scale / (D - depth);
+    return [w / 2 + dot(p, right) * k, h * 0.54 - dot(p, up) * k, depth];
+  };
+
+  // ground grid (world z = -1.1)
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = css("--line");
+  for (let i = -3; i <= 3; i++) {
+    for (const [a, b] of [[[i * 0.7, -2.1, -1.1], [i * 0.7, 2.1, -1.1]], [[-2.1, i * 0.7, -1.1], [2.1, i * 0.7, -1.1]]]) {
+      const pa = proj(a), pb = proj(b);
+      ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
+    }
+  }
+
+  if (!latest) {
+    ctx.fillStyle = css("--muted");
+    ctx.font = `15px ${css("--f-body")}`;
+    ctx.textAlign = "center";
+    ctx.fillText("No data yet. Connect the ESP32 or run the demo.", w / 2, h / 2);
+    return;
+  }
+  const yawFix = [Math.cos(-yawRef / 2), 0, 0, Math.sin(-yawRef / 2)];
+  const q = qmul(yawFix, latest.q);
+  const toWorld = (v) => qrot(q, v);
+
+  // board faces, back to front
+  const light = qnorm([0, 0.4, 0.5, 0.75]).slice(1);
+  const faces = BOX_FACES.map((f) => {
+    const pts = f.v.map((c) => toWorld([c[0] * BOARD[0], c[1] * BOARD[1], c[2] * BOARD[2]]));
+    const n = toWorld(f.n);
+    const depth = pts.reduce((s, p) => s + dot(p, camDir), 0) / 4;
+    return { f, pts, n, depth };
+  }).sort((a, b) => a.depth - b.depth);
+  for (const { f, pts, n } of faces) {
+    if (dot(n, camDir) < -0.02) continue;
+    const shade = 0.55 + 0.45 * Math.max(0, dot(n, light));
+    ctx.beginPath();
+    pts.map(proj).forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+    ctx.closePath();
+    ctx.fillStyle = f.top ? css("--pcb") : css("--pcb-edge");
+    ctx.globalAlpha = 1;
+    ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.globalAlpha = 1 - shade;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = css("--pcb-edge");
+    ctx.stroke();
+    if (f.top) {
+      // chip and pin row on the top side, so "chip side up" is visible
+      const quad = (cx, cy, hx, hy, color) => {
+        const ps = [[cx-hx, cy-hy], [cx+hx, cy-hy], [cx+hx, cy+hy], [cx-hx, cy+hy]]
+          .map(([x, y]) => proj(toWorld([x, y, BOARD[2] + 0.005])));
+        ctx.beginPath(); ps.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath();
+        ctx.fillStyle = color; ctx.fill();
+      };
+      quad(0.15, 0, 0.3, 0.3, css("--chip"));
+      for (let i = 0; i < 8; i++) quad(-1.05, -0.62 + i * 0.177, 0.05, 0.05, "#d8b45a");
+    }
+  }
+
+  // axis arrows from the board center
+  const arrow = (vec, color, label, len, width) => {
+    const o = proj([0, 0, 0]), tip = proj(vec.map((v) => v * len));
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+    ctx.beginPath(); ctx.moveTo(o[0], o[1]); ctx.lineTo(tip[0], tip[1]); ctx.stroke();
+    const ang = Math.atan2(tip[1] - o[1], tip[0] - o[0]), hl = 11;
+    if (Math.hypot(tip[0] - o[0], tip[1] - o[1]) > 6) {
+      ctx.beginPath();
+      ctx.moveTo(tip[0], tip[1]);
+      ctx.lineTo(tip[0] - hl * Math.cos(ang - 0.4), tip[1] - hl * Math.sin(ang - 0.4));
+      ctx.lineTo(tip[0] - hl * Math.cos(ang + 0.4), tip[1] - hl * Math.sin(ang + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.font = `600 15px ${css("--f-mono")}`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(label, tip[0] + 16 * Math.cos(ang), tip[1] + 16 * Math.sin(ang));
+  };
+  arrow(toWorld([1, 0, 0]), css("--ax-x"), "x", 1.9, 3);
+  arrow(toWorld([0, 1, 0]), css("--ax-y"), "y", 1.6, 3);
+  arrow(toWorld([0, 0, 1]), css("--ax-z"), "z", 1.3, 3);
+  const aw = toWorld(latest.a).map((v) => v / G);
+  arrow(aw, css("--acc"), "accel", 1.6, 2);
+}
+
+// ---------- rolling charts ----------
+function drawChart(c, key, minRange, unit) {
+  const { ctx, w, h } = fitCanvas(c);
+  ctx.clearRect(0, 0, w, h);
+  const padL = 44, padR = 8, padT = 8, padB = 18;
+  let m = minRange;
+  for (const s of hist) for (const v of s[key]) m = Math.max(m, Math.abs(v));
+  m = Math.ceil(m / 5) * 5;
+  const now = hist.length ? hist[hist.length - 1].t : 0;
+  const X = (t) => padL + (1 - (now - t) / HISTORY_S) * (w - padL - padR);
+  const Y = (v) => padT + (1 - (v + m) / (2 * m)) * (h - padT - padB);
+  ctx.font = `11px ${css("--f-mono")}`;
+  ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (const v of [-m, -m / 2, 0, m / 2, m]) {
+    ctx.beginPath(); ctx.moveTo(padL, Y(v)); ctx.lineTo(w - padR, Y(v)); ctx.stroke();
+    ctx.fillText((v > 0 ? "+" : "") + v.toFixed(Math.abs(v) < 10 && v % 1 ? 1 : 0), padL - 6, Y(v));
+  }
+  if (key === "a") {
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = css("--good");
+    for (const v of [G, -G]) if (v <= m) { ctx.beginPath(); ctx.moveTo(padL, Y(v)); ctx.lineTo(w - padR, Y(v)); ctx.stroke(); }
+    ctx.setLineDash([]);
+  }
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.fillText(`−${HISTORY_S} s`, padL, h - 4);
+  ctx.textAlign = "right"; ctx.fillText("now", w - padR, h - 4);
+  const colors = [css("--ax-x"), css("--ax-y"), css("--ax-z")];
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = colors[i];
+    ctx.beginPath();
+    hist.forEach((s, j) => (j ? ctx.lineTo(X(s.t), Y(s[key][i])) : ctx.moveTo(X(s.t), Y(s[key][i]))));
+    ctx.stroke();
+  }
+}
+
+// ---------- spirit level ----------
+function drawLevel() {
+  const c = $("level");
+  const { ctx, w, h } = fitCanvas(c);
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 22;
+  ctx.fillStyle = css("--panel-2"); ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+  for (const deg of [15, 30, 45, 60]) {
+    ctx.beginPath(); ctx.arc(cx, cy, R * Math.sin(deg / RAD) / Math.sin(75 / RAD), 0, 2 * Math.PI); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+  ctx.font = `600 12px ${css("--f-mono")}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = css("--ax-x"); ctx.fillText("+x", cx + R + 12, cy); ctx.fillText("−x", cx - R - 12, cy);
+  ctx.fillStyle = css("--ax-y"); ctx.fillText("+y", cx, cy - R - 11); ctx.fillText("−y", cx, cy + R + 11);
+  if (!latest) return;
+  const a = latest.a, n = Math.hypot(...a) || G;
+  const sx = a[0] / n, sy = a[1] / n;                   // sin of the tilt of each axis end
+  let px = sx / Math.sin(75 / RAD), py = sy / Math.sin(75 / RAD);
+  const r = Math.hypot(px, py); if (r > 1) { px /= r; py /= r; }
+  const upside = a[2] < 0;
+  ctx.fillStyle = upside ? css("--critical") : css("--acc");
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath(); ctx.arc(cx + px * R, cy - py * R, 13, 0, 2 * Math.PI); ctx.fill();
+  ctx.globalAlpha = 1;
+  if (upside) { ctx.fillStyle = css("--critical"); ctx.font = `600 12px ${css("--f-body")}`; ctx.fillText("upside down", cx, cy + R * 0.5); }
+}
+
+// ---------- numbers, bars, state ----------
+const sgn = (v, n) => { const s = Math.abs(v).toFixed(n); return (v >= 0 || +s === 0 ? "+" : "−") + s; };
+function setBar(id, v, max) {
+  const el = $(id), f = Math.max(-1, Math.min(1, v / max)) * 50;
+  el.style.left = (f >= 0 ? 50 : 50 + f) + "%";
+  el.style.width = Math.abs(f) + "%";
+}
+
+function describe(gdeg, a, amag) {
+  const spin = Math.hypot(...gdeg), push = Math.abs(amag - 9.6);
+  if (amag < 3) return ["falling (free fall)", `|a| = ${amag.toFixed(1)} m/s²: nothing is pushing the sensor, so the accelerometer reads almost 0.`];
+  if (push > 2.5) return ["being shaken or bumped", `|a| = ${amag.toFixed(1)} m/s², far from gravity (9.8): extra pushes are in the accel.`];
+  if (spin > 8) {
+    const i = [0, 1, 2].reduce((b, k) => (Math.abs(gdeg[k]) > Math.abs(gdeg[b]) ? k : b), 0);
+    const ax = "xyz"[i], dir = gdeg[i] > 0 ? "+" : "−";
+    return [`turning about ${ax}`, `gyro ${ax} = ${sgn(gdeg[i], 0)} deg/s: spinning in the ${dir} direction around the ${ax} axis.`];
+  }
+  if (a[2] < -7) return ["upside down, still", "accel z is about −9.8: the z axis points down."];
+  const tilt = Math.acos(Math.max(-1, Math.min(1, a[2] / (amag || G)))) * RAD;
+  if (tilt < 8) return ["flat and still", "gyro ≈ 0 and gravity is all on z."];
+  const i = Math.abs(a[0]) > Math.abs(a[1]) ? 0 : 1;
+  return [`tilted, still (${tilt.toFixed(0)}°)`, `gyro ≈ 0, but gravity is now shared: the ${a[i] > 0 ? "+" : "−"}${"xy"[i]} end is raised.`];
+}
+
+function render() {
+  drawView();
+  drawChart($("chartGyro"), "g", 10, "deg/s");
+  drawChart($("chartAcc"), "a", 12, "m/s²");
+  drawLevel();
+  $("chipRate").textContent = (mode === "serial" || mode === "demo" ? rate : "—") + " Hz";
+  if (latest) {
+    const gd = latest.g.map((v) => v * RAD), a = latest.a, amag = Math.hypot(...a);
+    ["gx", "gy", "gz"].forEach((id, i) => ($(id).textContent = sgn(gd[i], 1)));
+    ["ax", "ay", "az"].forEach((id, i) => ($(id).textContent = sgn(a[i], 2)));
+    ["tx", "ty", "tz"].forEach((id, i) => ($(id).textContent = sgn(Math.asin(Math.max(-1, Math.min(1, a[i] / (amag || G)))) * RAD, 0)));
+    ["gnx", "gny", "gnz"].forEach((id, i) => ($(id).textContent = sgn(gd[i], 1)));
+    [["gbx", "--ax-x"], ["gby", "--ax-y"], ["gbz", "--ax-z"]].forEach(([id, col], i) => { setBar(id, gd[i], 200); $(id).style.background = css(col); });
+    ["ix", "iy", "iz"].forEach((id, i) => ($(id).textContent = `${"xyz"[i]} ${sgn(turned[i], 0)}°`));
+    $("amag").textContent = amag.toFixed(2) + " m/s²";
+    $("age").textContent = latest.age + " ms";
+    $("restarts").textContent = imuRestarts === null ? "—" : imuRestarts;
+    const ageLevel = latest.age < 50 ? "good" : latest.age < 500 ? "warn" : "bad";
+    $("chipAge").innerHTML = `<span class="dot ${ageLevel}"></span>age ${latest.age} ms`;
+    $("aneedle").style.left = Math.min(100, amag / 20 * 100) + "%";
+    const [name, why] = describe(gd, a, amag);
+    $("stateName").textContent = latest.age > 500 ? "not updating" : name;
+    $("stateWhy").textContent = latest.age > 500 ? "age keeps growing: the IMU stopped sending. The firmware watchdog restarts it after 1 s." : why;
+  }
+  requestAnimationFrame(render);
+}
+$("ag").style.left = (G / 20 * 100) + "%";
+$("aband").style.left = (8.9 / 20 * 100) + "%";
+$("aband").style.width = ((10.5 - 8.9) / 20 * 100) + "%";
+buildSnapUi();
+setButtons();
+{ const m = location.hash.match(/snap=(\d+)/); if (m) showSnapshot(+m[1] - 1); }  // e.g. imu_viewer.html#snap=3
+requestAnimationFrame(render);
+</script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Servo Calibration Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #eef1f4; --panel: #ffffff; --panel-2: #f6f8fa; --ink: #15202b; --ink-2: #46525f; --muted: #6f7b88;
+  --line: #d6dde5; --accent: #2b59c3; --accent-soft: #e2e9f8;
+  --good: #0ca30c; --good-soft: #e3f5e3; --warning: #b98200; --warning-soft: #fdf3dc; --critical: #d03b3b; --critical-soft: #fbe6e6;
+  --term-bg: #10161d; --term-ink: #d7e0ea;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --panel: #161f28; --panel-2: #1b2530; --ink: #e6ecf2; --ink-2: #a8b3be; --muted: #7f8b97;
+    --line: #2b3643; --accent: #7b9cec; --accent-soft: #1d2a45;
+    --good: #3cc13c; --good-soft: #15291a; --warning: #e0a82e; --warning-soft: #2c2412; --critical: #e86060; --critical-soft: #2e1618;
+    --term-bg: #0a0f14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --panel: #161f28; --panel-2: #1b2530; --ink: #e6ecf2; --ink-2: #a8b3be; --muted: #7f8b97;
+  --line: #2b3643; --accent: #7b9cec; --accent-soft: #1d2a45;
+  --good: #3cc13c; --good-soft: #15291a; --warning: #e0a82e; --warning-soft: #2c2412; --critical: #e86060; --critical-soft: #2e1618;
+  --term-bg: #0a0f14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.3rem, 6vw, 3.3rem); font-weight: 700; }
+h2 { font-size: 2rem; font-weight: 700; }
+h3 { font-size: 1.3rem; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+code, kbd, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+kbd { display: inline-block; min-width: 1.7em; text-align: center; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 5px; padding: 0 6px; background: var(--panel); color: var(--ink); font-weight: 500; }
+a { color: var(--accent); }
+ul, ol { margin: 0; padding-left: 22px; }
+li + li { margin-top: 4px; }
+
+header.hero { padding-block: 36px 20px; display: grid; gap: 12px; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--ink-2); font-size: 1.08rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; }
+.facts span { font-family: var(--f-mono); font-size: 0.8rem; border: 1px solid var(--line); background: var(--panel); border-radius: 4px; padding: 3px 9px; color: var(--ink-2); }
+
+nav.rail { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav.rail .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; }
+nav.rail a { font-family: var(--f-display); font-weight: 600; font-size: 1.02rem; color: var(--ink-2); text-decoration: none; padding: 5px 11px; border-radius: 4px; white-space: nowrap; }
+nav.rail a span { font-family: var(--f-mono); font-size: 0.74rem; color: var(--accent); margin-right: 5px; }
+nav.rail a:hover, nav.rail a:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+
+main { display: grid; gap: 26px; padding-block: 24px 60px; }
+section.block { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 24px clamp(16px, 3vw, 28px); display: grid; gap: 16px; scroll-margin-top: 58px; }
+.num { font-family: var(--f-mono); color: var(--accent); font-size: 0.82rem; letter-spacing: 0.06em; }
+.sec-head { display: grid; gap: 6px; }
+.sec-head p { color: var(--ink-2); }
+
+.callout { border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; padding: 10px 14px; }
+.callout.warn { border-color: var(--warning); background: var(--warning-soft); }
+.callout.stop { border-color: var(--critical); background: var(--critical-soft); }
+.callout.good { border-color: var(--good); background: var(--good-soft); }
+.callout b.tag { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.08em; margin-right: 6px; }
+
+.term { background: var(--term-bg); color: var(--term-ink); border-radius: 6px; padding: 10px 14px; font-family: var(--f-mono); font-size: 0.86rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.term .c { color: #7fd1ff; }
+.term .o { color: #a9b6c3; }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.78rem; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.05em; }
+td.k { white-space: nowrap; }
+tr.group td { background: var(--panel-2); font-family: var(--f-display); font-size: 1.05rem; font-weight: 600; color: var(--ink-2); padding-block: 5px; }
+
+/* check steps */
+ol.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; counter-reset: s; }
+ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--panel-2); margin: 0; }
+ol.steps > li::before { content: counter(s); width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--panel); display: grid; place-items: center; font-family: var(--f-mono); font-weight: 500; }
+ol.steps .body { display: grid; gap: 8px; min-width: 0; }
+.do, .see { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; font-size: 0.95rem; }
+.do > span:first-child, .see > span:first-child { font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.save { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--good); }
+
+/* joint picker */
+.picker { display: grid; gap: 12px; border: 2px solid var(--accent); border-radius: 10px; padding: 16px; background: var(--panel); }
+.picker label { font-size: 0.9rem; color: var(--ink-2); display: grid; gap: 4px; max-width: 360px; }
+select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .targets { grid-template-columns: minmax(0, 1fr); } }
+.tgt { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--panel-2); display: grid; gap: 2px; }
+.tgt .k { font-size: 0.78rem; color: var(--muted); }
+.tgt .v { font-family: var(--f-display); font-size: 2rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tgt .s { font-size: 0.86rem; color: var(--ink-2); }
+.tgt.key { border-color: var(--accent); background: var(--accent-soft); }
+
+/* progress */
+.progress-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; justify-content: space-between; }
+.bar { height: 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--good); width: 0; transition: width 0.2s; }
+.joints { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 720px) { .joints { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.leg { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--panel-2); display: grid; gap: 6px; }
+.leg h3 { font-size: 1.1rem; }
+.leg label { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 6px; align-items: center; font-size: 0.9rem; cursor: pointer; }
+.leg input { width: 18px; height: 18px; accent-color: var(--good); margin: 0; }
+.leg label.on span { color: var(--muted); text-decoration: line-through; }
+button { font: inherit; font-size: 0.88rem; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); padding: 6px 11px; }
+button:hover { border-color: var(--accent); }
+footer { color: var(--muted); font-size: 0.84rem; padding-block: 0 40px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="wrap hero">
+  <div class="eyebrow">MG90S Dog R1 · hardware/calibrate.py</div>
+  <h1>Servo Calibration Tutorial</h1>
+  <p class="lede">What to do, which key to press, and when to save, for all 12 servos. Follow the sections in order. The first time, allow about 10 minutes per joint.</p>
+  <div class="facts"><span>12 joints</span><span>4 marks per joint</span><span>save after every joint</span><span>result: hardware_calibration.json</span></div>
+</header>
+
+<nav class="rail" aria-label="Sections">
+  <div class="wrap">
+    <a href="#prep"><span>1</span>Prepare</a>
+    <a href="#keys"><span>2</span>Keys</a>
+    <a href="#joint"><span>3</span>Your joint</a>
+    <a href="#routine"><span>4</span>Routine</a>
+    <a href="#save"><span>5</span>Saving</a>
+    <a href="#trouble"><span>6</span>Messages</a>
+    <a href="#progress"><span>7</span>Progress</a>
+    <a href="#done"><span>8</span>When done</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- 1 PREPARE -->
+<section class="block" id="prep">
+  <div class="sec-head">
+    <div class="num">1 · PREPARE</div>
+    <h2>Before you start</h2>
+    <p>Do this once per session. Each item prevents a specific problem later.</p>
+  </div>
+  <ol>
+    <li><b>Robot on the stand, all four feet in the air.</b> Body level. Legs must swing freely.</li>
+    <li><b>Power off, move each joint once by hand</b> through its range. Check that no cable catches.</li>
+    <li><b>Wiring:</b> ESP32 D21 → SDA, D22 → SCL, 3V3 → VCC, GND → GND. Separate 5 V (5 A or more) supply on the PCA9685 V+ screw terminal.</li>
+    <li><b>Firmware uploaded</b> (<code>hardware/esp32_servo_bridge</code>). In the Arduino Serial Monitor, <code>?</code> gets <code>READY</code>.</li>
+    <li><b>Close the Arduino Serial Monitor.</b> Only one program can use the COM port.</li>
+    <li><b>An angle meter:</b> a phone inclinometer app, or a protractor.</li>
+    <li><b>Install pyserial once:</b> <code>pip install pyserial</code></li>
+  </ol>
+  <div class="callout"><b class="tag">FIRST TIME?</b>Practise the keys without hardware first. Nothing is sent anywhere:</div>
+  <div class="term"><span class="c">python hardware/calibrate.py --dry-run</span></div>
+  <p>Then start for real, from the project folder (<code>C:\Lecture\MyProject\Robot_dog</code>). Use your own COM number, from Device Manager → Ports:</p>
+  <div class="term"><span class="c">python hardware/calibrate.py --port COM5</span>
+<span class="o">===== fl_1  (PCA9685 channel 0) =====  [joint 1 of 12 · 0/12 complete]
+  front-left leg · roll: swings the whole leg sideways
+  sim range: -6.0° to 18.0°
+  measure: Stand IN FRONT of the robot. Hold the phone upright, flat against the outer face of the shoulder bracket. 0° = bracket vertical.
+  pose 1 (key 1): phone reads 0.0° (bracket vertical, leg straight down)
+  pose 2 (key 2): phone reads 15.0°, bottom of the bracket tilted OUTWARD
+                  = pose 1 turned 15° OUTWARD
+  now 1500 µs | center=None dir=None us/rad=None min=None max=None
+  NEXT: POSE 1. Get the phone to read 0.0° (bracket vertical, leg straight down). Press d (+10 µs) or a (-10 µs) and watch the number: if it moves away from the target, switch keys. Finish with c / z (±2 µs). Then press 1.</span></div>
+  <div class="callout good"><b class="tag">FOLLOW NEXT</b>After every key, the line starting with <code>NEXT:</code> tells you the one thing to do next: what the phone should read, which way to turn, and, once pose 2 is done, exactly which key (<kbd>a</kbd> or <kbd>d</kbd>) moves the leg which way. The header shows which joint you're on and how many are complete. This page explains the why and the how.</div>
+  <div class="callout warn"><b class="tag">HEADS UP</b>The moment a joint is selected, its servo jumps to 1500 µs (or to its saved center). Keep your hand near the leg the first time.</div>
+</section>
+
+<!-- 2 KEYS -->
+<section class="block" id="keys">
+  <div class="sec-head">
+    <div class="num">2 · KEYS</div>
+    <h2>What every key means</h2>
+    <p>Press keys one at a time, without Enter. Think of <kbd>1</kbd>–<kbd>4</kbd> as telling the program what the leg looks like <em>right now</em>.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Key</th><th>Meaning</th><th>Use it when</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="3">Move the servo</td></tr>
+        <tr><td class="k"><kbd>a</kbd> <kbd>d</kbd></td><td>Pulse −10 / +10 µs. About 1° per press.</td><td>Big moves toward a target</td></tr>
+        <tr><td class="k"><kbd>z</kbd> <kbd>c</kbd></td><td>Pulse −2 / +2 µs. About 0.2° per press.</td><td>Fine-tuning the last degree</td></tr>
+        <tr><td class="k"><kbd>g</kbd></td><td>Go back to the saved standing pulse (center).</td><td>Re-checking the standing pose</td></tr>
+        <tr><td class="k"><kbd>r</kbd></td><td>Relax: stop the pulse, so the leg goes limp. <kbd>a</kbd>/<kbd>d</kbd>/<kbd>g</kbd> make it hold again.</td><td>Buzzing, re-seating a horn, turning by hand</td></tr>
+        <tr class="group"><td colspan="3">Mark what the leg looks like now</td></tr>
+        <tr><td class="k"><kbd>1</kbd></td><td>"The leg is at its <b>standing angle</b> now." Saves the pulse as <code>center_us</code>.</td><td>Pose 1 reached</td></tr>
+        <tr><td class="k"><kbd>2</kbd></td><td>"The leg is <b>standing + 30°</b> (roll: 15°) now." Calculates <code>direction</code> and <code>us_per_rad</code>.</td><td>Pose 2 reached. Needs <kbd>1</kbd> first.</td></tr>
+        <tr><td class="k"><kbd>3</kbd></td><td>"This is <b>one end</b> of safe travel."</td><td>A few degrees before the leg touches something</td></tr>
+        <tr><td class="k"><kbd>4</kbd></td><td>"This is the <b>other end</b>." Sets <code>min_us</code> and <code>max_us</code> and checks the sim range fits.</td><td>Near the opposite end</td></tr>
+        <tr class="group"><td colspan="3">Check, save, move on</td></tr>
+        <tr><td class="k"><kbd>t</kbd></td><td>Test: the program sweeps the leg through the whole sim range and back, slowly.</td><td>After <kbd>1</kbd>–<kbd>4</kbd>. Save first.</td></tr>
+        <tr><td class="k"><kbd>s</kbd></td><td>Save everything to <code>hardware_calibration.json</code>.</td><td>After every joint (see section 5)</td></tr>
+        <tr><td class="k"><kbd>n</kbd> <kbd>p</kbd></td><td>Next / previous joint. Does <b>not</b> save.</td><td>After saving a finished joint</td></tr>
+        <tr><td class="k"><kbd>h</kbd></td><td>Show the key list again.</td><td>You forgot a key</td></tr>
+        <tr><td class="k"><kbd>q</kbd></td><td>Save, relax every servo, and quit.</td><td>End of a session</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="mono" style="font-size:0.85rem;color:var(--ink-2)">Status line after each key: now 1480 µs | center=1480 dir=-1 us/rad=599.7 min=964 max=1884 ✔ done</p>
+  <p>The status line shows the joint's six numbers. <b>✔ done</b> at the end means this joint is complete. The <code>NEXT:</code> line below it says what to do now.</p>
+</section>
+
+<!-- 3 YOUR JOINT -->
+<section class="block" id="joint">
+  <div class="sec-head">
+    <div class="num">3 · YOUR JOINT</div>
+    <h2>Targets for the joint on screen</h2>
+    <p>Pick the joint the program is showing. The two angles you need to hit, and how to measure them, appear below.</p>
+  </div>
+  <div class="picker">
+    <label for="jointSel">Joint shown by calibrate.py
+      <select id="jointSel"></select>
+    </label>
+    <div class="targets">
+      <div class="tgt key"><div class="k">Pose 1 · then press <kbd>1</kbd></div><div class="v" id="t1"></div><div class="s" id="t1s"></div></div>
+      <div class="tgt key"><div class="k">Pose 2 · then press <kbd>2</kbd></div><div class="v" id="t2"></div><div class="s" id="t2s"></div></div>
+      <div class="tgt"><div class="k">Sim range (must fit inside marks 3 and 4)</div><div class="v" id="t3"></div><div class="s" id="t3s"></div></div>
+    </div>
+    <p id="measure"></p>
+  </div>
+</section>
+
+<!-- 4 ROUTINE -->
+<section class="block" id="routine">
+  <div class="sec-head">
+    <div class="num">4 · THE ROUTINE</div>
+    <h2>Seven steps, the same for every joint</h2>
+    <p>Repeat this for all 12 joints. The program starts at fl_1; <kbd>n</kbd> moves to the next.</p>
+  </div>
+  <ol class="steps">
+    <li><div class="body">
+      <h3>Look at the joint header</h3>
+      <div class="do"><span>Do</span><span>Read the joint name, then set the picker in section 3 to the same joint. Pose 1 and pose 2 are printed with their exact angles.</span></div>
+      <div class="see"><span>See</span><span>The leg moves to 1500 µs (or to the saved center if this joint was done before).</span></div>
+    </div></li>
+    <li><div class="body">
+      <h3>Reach pose 1, then press <kbd>1</kbd></h3>
+      <div class="do"><span>Do</span><span>Use <kbd>a</kbd>/<kbd>d</kbd> until the angle meter is close to the pose 1 target, then <kbd>z</kbd>/<kbd>c</kbd> to get within ±0.5°. If the number moves away from the target, use the other key. Then press <kbd>1</kbd>.</span></div>
+      <div class="see"><span>See</span><span><code>center = 1480 µs saved</code>. Your number will differ.</span></div>
+      <div class="callout warn"><b class="tag">CHECK</b>If center is far from 1500 (below ~1150 or above ~1850), there may not be room on both sides. Consider re-seating the horn now (section 6).</div>
+    </div></li>
+    <li><div class="body">
+      <h3>Reach pose 2, then press <kbd>2</kbd></h3>
+      <div class="do"><span>Do</span><span>Turn the leg to the pose 2 target: 30° past pose 1 (roll: 15°), in the direction the picker shows. Use <kbd>a</kbd>/<kbd>d</kbd>, then <kbd>z</kbd>/<kbd>c</kbd>. Then press <kbd>2</kbd>.</span></div>
+      <div class="see"><span>See</span><span><code>direction=-1, us_per_rad=599.7 (10.47 µs/deg)</code>. Below it: <code>pose 2 is ___ µs from pose 1</code>. For 30° that is usually 293–388 µs (15° roll: 146–194 µs); these servos measured about 650–710 µs/rad.</span></div>
+      <div class="callout"><b class="tag">WHY</b>Two known angles and their pulses define a straight line. Direction is which way the servo turns; us_per_rad is how many µs per radian. Measure carefully here: an error of 1° makes every later angle about 3% off.</div>
+    </div></li>
+    <li><div class="body">
+      <h3>Find one end, press <kbd>3</kbd></h3>
+      <div class="do"><span>Do</span><span>Move slowly toward one end. Near the end switch to <kbd>z</kbd>/<kbd>c</kbd>. When the leg touches anything, back off 30–50 µs (3–5°) and press <kbd>3</kbd>.</span></div>
+      <div class="callout stop"><b class="tag">STOP</b>A continuous buzz means the servo is pushing against something. Move back right away or press <kbd>r</kbd>. A stalled MG90S gets hot within seconds.</div>
+    </div></li>
+    <li><div class="body">
+      <h3>Find the other end, press <kbd>4</kbd></h3>
+      <div class="do"><span>Do</span><span>Same at the opposite end. Which end is 3 and which is 4 doesn't matter.</span></div>
+      <div class="see"><span>See</span><span><code>min_us=964, max_us=1884</code> and then either <code>sim range … fits inside the physical limits ✔</code> or a ⚠ warning (section 6).</span></div>
+    </div></li>
+    <li><div class="body">
+      <h3>Save, then test with <kbd>t</kbd></h3>
+      <div class="do"><span>Do</span><span>Press <kbd>s</kbd> first. Then press <kbd>t</kbd> and watch: the leg goes standing → one sim limit → the other → standing. It takes 2–6 seconds.</span></div>
+      <div class="see"><span>See</span><span>Smooth movement, no buzzing, no touching, and it ends back in the standing pose. The status line ends with <code>✔ done</code>.</span></div>
+      <div class="callout warn"><b class="tag">NOTE</b>Keys don't work during the sweep. In an emergency, press Ctrl+C or switch off the servo supply. Saving before <kbd>t</kbd> means you lose nothing if you have to.</div>
+    </div></li>
+    <li><div class="body">
+      <h3>Save again, tick it off, next joint</h3>
+      <div class="do"><span>Do</span><span>Press <kbd>s</kbd>, tick the joint in section 7, then press <kbd>n</kbd>.</span></div>
+      <div class="see"><span>See</span><span><code>Saved: …\hardware_calibration.json</code>, then the next joint's header.</span></div>
+    </div></li>
+  </ol>
+  <div class="callout good"><b class="tag">TIP</b>Servos you already finished keep holding their last pulse while you work on the next joint. So when you calibrate a knee, its hip stays in the standing pose. That's why the order roll → hip → knee works well. After a restart, every servo starts limp again.</div>
+</section>
+
+<!-- 5 SAVING -->
+<section class="block" id="save">
+  <div class="sec-head">
+    <div class="num">5 · SAVING</div>
+    <h2>When your work is on disk, and when it isn't</h2>
+    <p>Keys <kbd>1</kbd>–<kbd>4</kbd> only change values in memory. The file is written <b>only</b> by <kbd>s</kbd> and <kbd>q</kbd>.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Situation</th><th>Saved?</th></tr></thead>
+      <tbody>
+        <tr><td>You press <kbd>s</kbd></td><td><span class="save">✔ yes</span></td></tr>
+        <tr><td>You press <kbd>q</kbd></td><td><span class="save">✔ yes</span></td></tr>
+        <tr><td>You press <kbd>n</kbd> or <kbd>p</kbd></td><td>No. Still only in memory. The program reminds you, and the header shows <code>unsaved changes</code>.</td></tr>
+        <tr><td>You close the terminal window</td><td style="color:var(--critical)"><b>No. Everything since the last <kbd>s</kbd> is lost.</b></td></tr>
+        <tr><td>The program stops with an error (USB unplugged, ESP32 error)</td><td style="color:var(--critical)"><b>No. Everything since the last <kbd>s</kbd> is lost.</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout good"><b class="tag">RULE</b>Press <kbd>s</kbd> twice per joint: <b>before <kbd>t</kbd></b> and <b>after <kbd>t</kbd></b> looks good. Always leave with <kbd>q</kbd>.</div>
+  <h3>Stopping and coming back later</h3>
+  <p>Saved joints are loaded automatically next time. Start at the first joint you haven't finished:</p>
+  <div class="term"><span class="c">python hardware/calibrate.py --port COM5 --joint fr_1</span></div>
+  <p>A finished joint opens at its saved standing pulse, so you can check it with <kbd>g</kbd>. To redo a joint, just do <kbd>1</kbd>–<kbd>4</kbd> again and press <kbd>s</kbd>. The new values replace the old ones.</p>
+  <p>The file's <code>"status"</code> tells you where you are: <code>PARTIAL_DO_NOT_RUN_POLICY</code> until all 12 joints are complete, then <code>MEASURED</code>.</p>
+</section>
+
+<!-- 6 MESSAGES -->
+<section class="block" id="trouble">
+  <div class="sec-head">
+    <div class="num">6 · MESSAGES AND FIXES</div>
+    <h2>What the program is telling you</h2>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>You see</th><th>It means</th><th>Do this</th></tr></thead>
+      <tbody>
+        <tr><td><code>could not open port 'COM5'</code> / Access is denied</td><td>Another program has the port, or the number is wrong.</td><td>Close the Arduino Serial Monitor. Check Device Manager.</td></tr>
+        <tr><td><code>No response from the ESP32 on COM5</code></td><td>The ESP32 didn't answer <code>?</code>.</td><td>Re-upload the firmware. Try another USB cable (some cables only charge).</td></tr>
+        <tr><td><code>Save 1 (center) first</code></td><td>You pressed <kbd>2</kbd> before <kbd>1</kbd>.</td><td>Reach pose 1 and press <kbd>1</kbd>.</td></tr>
+        <tr><td><code>Too close to center…</code></td><td>Pose 2 is less than 50 µs away from pose 1.</td><td>Turn the full 30° (roll: 15°), then press <kbd>2</kbd>.</td></tr>
+        <tr><td><code>⚠ Outside that range: pose 2 is probably not exactly 30° from pose 1</code></td><td>The pulse changed much less or much more than these MG90S servos need for that angle (about 11–12 µs per degree). Usually you stopped early, went too far, or turned the wrong way.</td><td>Check the phone against the pose 2 reading in the header, adjust, press <kbd>2</kbd> again.</td></tr>
+        <tr><td><code>⚠ Not recorded: both limits would be on the same side of pose 1</code></td><td>Limit 3 and limit 4 must be on opposite sides of the standing pose.</td><td>Go back past pose 1 to the other end, then press the key again.</td></tr>
+        <tr><td><code>⚠ The sim range needs … but the hardware only allows …</code></td><td>The leg can't reach the whole range the simulator uses.</td><td>Re-seat the horn (below), then redo this joint from <kbd>1</kbd>.</td></tr>
+        <tr><td><code>Available after saving marks 1-4</code></td><td>You pressed <kbd>t</kbd> too early.</td><td>Finish <kbd>1</kbd>–<kbd>4</kbd> first.</td></tr>
+        <tr><td>Continuous buzzing</td><td>Stall: pushing against something.</td><td>Move back or press <kbd>r</kbd> at once.</td></tr>
+        <tr><td>Leg twitches, ESP32 restarts</td><td>The 5 V rail dips.</td><td>Stronger supply, thicker/shorter wires, 1000 µF capacitor on V+.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Re-seating a horn</h3>
+  <ol>
+    <li>Press <kbd>r</kbd> so the servo goes limp.</li>
+    <li>Remove the horn screw, pull the horn off, and put it back <b>one tooth</b> further in the direction that centers the range. Refit the screw.</li>
+    <li>Old values for this joint are now wrong. Redo it from step 2 of the routine (<kbd>1</kbd> → <kbd>2</kbd> → <kbd>3</kbd> → <kbd>4</kbd>), then <kbd>s</kbd>.</li>
+  </ol>
+</section>
+
+<!-- 7 PROGRESS -->
+<section class="block" id="progress">
+  <div class="progress-head">
+    <div class="sec-head">
+      <div class="num">7 · PROGRESS</div>
+      <h2>Your 12 joints</h2>
+    </div>
+    <div class="mono" id="count" aria-live="polite"></div>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+  <div class="joints" id="joints"></div>
+  <p style="font-size:0.88rem;color:var(--ink-2)">Tick a joint only after <kbd>t</kbd> looked good and you pressed <kbd>s</kbd>. Ticks are kept in this browser only. <button type="button" id="reset">Clear ticks</button></p>
+</section>
+
+<!-- 8 DONE -->
+<section class="block" id="done">
+  <div class="sec-head">
+    <div class="num">8 · WHEN ALL 12 ARE DONE</div>
+    <h2>Finish and check</h2>
+  </div>
+  <ol>
+    <li>Press <kbd>q</kbd>. Open <code>hardware_calibration.json</code> and check <code>"status": "MEASURED"</code>.</li>
+    <li>Sanity check the directions: left and right legs are mirrored, so a joint and its mirror (for example <code>fl_2</code> and <code>fr_2</code>) usually have opposite <code>direction</code>.</li>
+    <li>Keep a copy of the file. It belongs to <em>these</em> servos: if you swap a servo or move a horn, redo that joint.</li>
+    <li>Next: send the standing pose to all 12 servos at once and compare with the simulator (bring-up step 4 in <a href="servo_bench.html#bringup">Servo Bench</a>).</li>
+  </ol>
+  <p>Want to see what the code does behind each key? <a href="calibrate_walkthrough.html">Open the code walkthrough.</a></p>
+</section>
+</main>
+<footer class="wrap">Numbers in the examples come from one simulated servo. Yours will differ; that is the point of calibrating.</footer>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const LEGS = { fl: "front-left", fr: "front-right", bl: "back-left", br: "back-right" };
+const ORDER = ["fl", "fr", "bl", "br"].flatMap((l) => [1, 2, 3].map((i) => `${l}_${i}`));
+const KIND = { 1: "roll", 2: "hip", 3: "knee" };
+const sgn = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(v % 1 ? 1 : 0) + "°";
+
+function targets(j) {
+  const [leg, i] = j.split("_"), left = leg[1] === "l";
+  if (i === "1") return {
+    p1: 0, p1s: "Shoulder bracket square to the body, leg straight down (front view).",
+    p2: left ? 15 : -15, p2s: "Foot swung outward, away from the body, by 15°.",
+    range: left ? [-6, 18] : [-18, 6],
+    measure: "Measure from the front with the phone flat against the shoulder bracket; 0° is vertical. Pose 2 is always outward. On the right legs the program shows −15° because the right side is mirrored.",
+  };
+  if (i === "2") return {
+    p1: -19.4, p1s: "Thigh leaning 19.4° toward the front of the robot.",
+    p2: 10.6, p2s: "Thigh leaning 10.6° toward the tail (30° further back).",
+    range: [-48, 20],
+    measure: "Measure from the side with the phone along the thigh. Pose 1 leans toward the front, pose 2 toward the tail.",
+  };
+  return {
+    p1: 42, p1s: "Knee bent 42° from straight (foot right under the hip).",
+    p2: 72, p2s: "Knee bent 72° from straight (30° more).",
+    range: [5, 85],
+    measure: "The knee angle is the bend between thigh and shank; 0° is a straight leg. With a phone, measure the shank's tilt and subtract the thigh's tilt.",
+  };
+}
+
+const sel = $("jointSel");
+ORDER.forEach((j, ch) => {
+  const [leg, i] = j.split("_");
+  sel.add(new Option(`${j}: ${LEGS[leg]} ${KIND[i]} (channel ${ch})`, j));
+});
+function showJoint() {
+  const t = targets(sel.value);
+  $("t1").textContent = sgn(t.p1); $("t1s").textContent = t.p1s;
+  $("t2").textContent = sgn(t.p2); $("t2s").textContent = t.p2s;
+  $("t3").textContent = `${sgn(t.range[0])} … ${sgn(t.range[1])}`;
+  $("t3s").textContent = "The program checks this after mark 4.";
+  $("measure").textContent = t.measure;
+}
+sel.addEventListener("change", showJoint);
+
+const KEY = "calibration-tutorial-done";
+let done = [];
+try { done = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { done = []; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) { /* storage unavailable */ } }
+function renderProgress() {
+  const host = $("joints"); host.replaceChildren();
+  for (const leg of ["fl", "fr", "bl", "br"]) {
+    const box = document.createElement("div"); box.className = "leg";
+    const h = document.createElement("h3"); h.textContent = `${leg.toUpperCase()} · ${LEGS[leg]}`; box.appendChild(h);
+    for (const i of [1, 2, 3]) {
+      const j = `${leg}_${i}`, ch = ORDER.indexOf(j);
+      const lab = document.createElement("label"); if (done.includes(j)) lab.className = "on";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = done.includes(j);
+      cb.addEventListener("change", () => {
+        done = cb.checked ? [...new Set([...done, j])] : done.filter((x) => x !== j);
+        save(); renderProgress();
+        if (cb.checked) { const next = ORDER.find((x) => !done.includes(x)); if (next) { sel.value = next; showJoint(); } }
+      });
+      const sp = document.createElement("span"); sp.textContent = `${j} ${KIND[i]} · ch ${ch}`;
+      lab.append(cb, sp); box.appendChild(lab);
+    }
+    host.appendChild(box);
+  }
+  $("count").textContent = done.length === 12 ? "12 / 12 done · check status is MEASURED" : `${done.length} / 12 done`;
+  $("barFill").style.width = (done.length / 12) * 100 + "%";
+}
+$("reset").addEventListener("click", () => { done = []; save(); renderProgress(); });
+
+sel.value = ORDER.find((x) => !done.includes(x)) || ORDER[0];
+showJoint();
+renderProgress();
+})();
+</script>
+</body>
+</html>

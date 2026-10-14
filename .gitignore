@@ -7,3 +7,7 @@ __pycache__/
 train/logs/
 train/*.log
 train/logs_*_stdout.log
+
+# IDE settings and IMU test logs (local only)
+.idea/
+imu_logs/
