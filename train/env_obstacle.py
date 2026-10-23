@@ -27,8 +27,24 @@ A separate file so env.py / env_gait.py stay untouched. Differences from env_gai
    phase (φ + offset) % 1, stance while < duty, used by the gait_phase_* rewards. Trot
    offsets: FL and BR together (0.0), FR and BL half a cycle later (0.5). The clock is
    not a sensor, so the real robot just runs the same clock on the PC.
+6. Optional heading (`heading`; off when missing): the yaw error from the start heading
+   goes into the observation as [sin, cos] (+2 inputs) and feeds the heading_track reward.
+   On the real robot it comes from the BNO085 game rotation vector (gyro + accel fusion,
+   no magnetometer): yaw relative to the yaw read at start. The start heading in the sim
+   is +x (across the bars), so "keep the start heading" = "walk straight over the bars".
+   The GPU env adds noise and a slow drift (game rotation vector yaw drifts); here it is clean.
 
-Observation: gyro 3 + accel 3 + raw action history 24 (= 30), + clock sin/cos 2 with a gait clock (= 32).
+7. Optional velocity command (`velocity_command`; off when missing): the forward speed target
+   vx_cmd is no longer fixed (target_vx) but drawn per episode from `range` (GPU env; also
+   redrawn every `resample_s`) and fed to the policy as vx_cmd × VX_CMD_OBS_SCALE (+1 input),
+   so the speed can be chosen at run time. With `gait_clock.frequency_hz: [lo, hi]` the clock
+   frequency follows the command linearly over `range` (slow = slower steps, not just shorter
+   ones). Here the command starts at `play` and set_command() changes it (play_obstacle.py).
+
+Every step the env also counts non-foot collision geoms on the floor (body_contact_penalty).
+
+Observation: gyro 3 + accel 3 + raw action history 24 (= 30), + clock sin/cos 2 with a gait clock,
++ heading error sin/cos 2 with a heading block, + vx_cmd 1 with a velocity command (= 35 with all three).
 """
 from __future__ import annotations
 
@@ -54,6 +70,21 @@ _OBSTACLE_DEFAULTS = {
     "action_clip": 3.0,                                              # |raw action| limit
     "max_command_rate": None,                                        # rad/s per joint target; None = no limit
     "gait_clock": None,                                              # e.g. {frequency_hz: 2.0, duty: 0.5, offsets: {...}}
+    "heading": None,                                                 # e.g. {scale: 0.25, noise_std: 0.01, drift_max: 0.002}
+    "velocity_command": None,                                        # e.g. {range: [0.02, 0.08], resample_s: 5.0, play: 0.04}
+}
+
+_VELOCITY_COMMAND_DEFAULTS = {
+    "range": [0.02, 0.08],  # m/s, vx_cmd drawn uniformly per episode (GPU env)
+    "resample_s": None,     # s, draw a new vx_cmd this often within an episode; None = once per episode
+    "play": 0.04,           # m/s, starting command in the CPU env (play_obstacle.py)
+}
+VX_CMD_OBS_SCALE = 10.0  # observation = vx_cmd × this (0.02-0.08 m/s -> 0.2-0.8); run_policy.py must match
+
+_HEADING_DEFAULTS = {
+    "scale": 0.25,       # rad, heading error at which heading_track drops to 1/e (~14 deg)
+    "noise_std": 0.01,   # rad, white noise on the observed yaw (GPU env only)
+    "drift_max": 0.002,  # rad/s, uniform ±, yaw drift per episode (GPU env only); BNO085 spec is far smaller
 }
 
 _GAIT_CLOCK_DEFAULTS = {
@@ -62,6 +93,7 @@ _GAIT_CLOCK_DEFAULTS = {
     "offsets": {"fl": 0.0, "fr": 0.5, "bl": 0.5, "br": 0.0},   # trot: diagonal pairs together
 }
 _CLOCK_REWARDS = {"gait_phase_contact", "gait_phase_swing_height"}
+CONTACT_MARGIN = 0.001  # m, a collision box whose lowest corner is below this counts as on the floor
 
 
 def load_task_config(path: str | Path) -> dict:
@@ -77,12 +109,58 @@ def load_task_config(path: str | Path) -> dict:
         cfg["gait_clock"] = {**_GAIT_CLOCK_DEFAULTS, **cfg["gait_clock"]}
     elif _CLOCK_REWARDS & set(cfg["reward_weights"]):
         raise ValueError(f"{path}: {_CLOCK_REWARDS & set(cfg['reward_weights'])} need a gait_clock block")
+    if cfg["heading"] is not None:
+        cfg["heading"] = {**_HEADING_DEFAULTS, **cfg["heading"]}
+    elif "heading_track" in cfg["reward_weights"]:
+        raise ValueError(f"{path}: heading_track needs a heading block")
+    if cfg["velocity_command"] is not None:
+        cfg["velocity_command"] = {**_VELOCITY_COMMAND_DEFAULTS, **cfg["velocity_command"]}
+    elif cfg["gait_clock"] is not None and isinstance(cfg["gait_clock"]["frequency_hz"], list):
+        raise ValueError(f"{path}: gait_clock.frequency_hz as [lo, hi] needs a velocity_command block")
     return cfg
 
 
 def obs_dim(cfg: dict) -> int:
-    """Network input size: 30, or 32 with a gait clock."""
-    return OBS_DIM + (2 if cfg["gait_clock"] is not None else 0)
+    """Network input size: 30, +2 with a gait clock, +2 with a heading block, +1 with a velocity command."""
+    return (OBS_DIM + (2 if cfg["gait_clock"] is not None else 0) + (2 if cfg["heading"] is not None else 0)
+            + (1 if cfg["velocity_command"] is not None else 0))
+
+
+def clock_frequency(cfg: dict, vx_cmd):
+    """Gait clock frequency (Hz) for a command: fixed, or linear over velocity_command.range
+    when frequency_hz is [lo, hi]. vx_cmd may be a float or a tensor."""
+    f = cfg["gait_clock"]["frequency_hz"]
+    if not isinstance(f, list):
+        return f
+    lo, hi = cfg["velocity_command"]["range"]
+    t = (vx_cmd - lo) / (hi - lo)
+    t = t.clamp(0.0, 1.0) if isinstance(t, torch.Tensor) else min(max(t, 0.0), 1.0)
+    return f[0] + t * (f[1] - f[0])
+
+
+def body_geom_ids(model: mujoco.MjModel) -> list[int]:
+    """Collision geoms that must stay off the floor: every *_collision_* box except the foot spheres."""
+    ids = [i for i in range(model.ngeom)
+           if "_collision_" in model.geom(i).name and not model.geom(i).name.endswith("shank_collision_1")]
+    assert all(model.geom_type[i] == mujoco.mjtGeom.mjGEOM_BOX for i in ids)
+    return ids
+
+
+def body_contact_count(xpos: torch.Tensor, xmat: torch.Tensor, half_size: torch.Tensor) -> torch.Tensor:
+    """Number of boxes whose lowest corner is within CONTACT_MARGIN of the floor (z = 0).
+    xpos (..., G, 3), xmat (..., G, 3, 3), half_size (G, 3). Bars are ignored."""
+    lowest = xpos[..., 2] - (xmat[..., 2, :].abs() * half_size).sum(-1)
+    return (lowest < CONTACT_MARGIN).float().sum(-1)
+
+
+def yaw_of(quat_wxyz) -> torch.Tensor:
+    """Yaw (rad) of a (..., 4) w,x,y,z quaternion."""
+    w, x, y, z = quat_wxyz[..., 0], quat_wxyz[..., 1], quat_wxyz[..., 2], quat_wxyz[..., 3]
+    return torch.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+
+
+def wrap_angle(a: torch.Tensor) -> torch.Tensor:
+    return torch.atan2(torch.sin(a), torch.cos(a))
 
 
 def foot_phase_offsets(cfg: dict) -> np.ndarray:
@@ -113,6 +191,7 @@ class ObstacleRewardCtx:
         self.velocity_scale = cfg["velocity_scale"]
         self.target_clearance = cfg["target_clearance"]
         self.duty = cfg["gait_clock"]["duty"] if cfg["gait_clock"] is not None else 0.5
+        self.heading_scale = cfg["heading"]["scale"] if cfg["heading"] is not None else _HEADING_DEFAULTS["scale"]
 
 
 class QuadrupedEnvObstacle(QuadrupedEnvGait):
@@ -132,19 +211,43 @@ class QuadrupedEnvObstacle(QuadrupedEnvGait):
         self._raw = self._prev_raw.copy()
         self._ctx = ObstacleRewardCtx(task_config)
         clock = task_config["gait_clock"]
-        self._clock_step = None if clock is None else clock["frequency_hz"] * self.control_dt  # phase per step
+        self._clock_step = None if clock is None else clock_frequency(task_config, 0.0) * self.control_dt  # phase per step
         self._phase_offsets = foot_phase_offsets(task_config)
         self._phase = 0.0
+        self._heading_obs = task_config["heading"] is not None
+        self._start_yaw = 0.0
+        self._body_geoms = body_geom_ids(self.model)
+        self._body_half = torch.tensor(self.model.geom_size[self._body_geoms], dtype=torch.float32)
+        self._vel_cmd = task_config["velocity_command"]
+        self.vx_cmd = task_config["target_vx"]
+        if self._vel_cmd is not None:
+            self.set_command(self._vel_cmd["play"])
+
+    def set_command(self, vx_cmd: float) -> None:
+        """Change the forward speed command (and the clock frequency that goes with it), any time."""
+        self.vx_cmd = float(vx_cmd)
+        self._ctx.target_vx = self.vx_cmd
+        if self._clock_step is not None:
+            self._clock_step = clock_frequency(self.cfg, self.vx_cmd) * self.control_dt
+
+    def yaw_error(self) -> float:
+        yaw = float(yaw_of(torch.tensor(self.data.qpos[3:7])))
+        return float(wrap_angle(torch.tensor(yaw - self._start_yaw)))
 
     def foot_phase(self) -> np.ndarray:
         return (self._phase + self._phase_offsets) % 1.0
 
     def _get_obs(self, action: np.ndarray) -> np.ndarray:
         obs = super()._get_obs(action)
-        if self._clock_step is None:
-            return obs
-        clock = np.array([np.sin(2 * np.pi * self._phase), np.cos(2 * np.pi * self._phase)], dtype=np.float32)
-        return np.concatenate([obs, clock])
+        if self._clock_step is not None:
+            clock = np.array([np.sin(2 * np.pi * self._phase), np.cos(2 * np.pi * self._phase)], dtype=np.float32)
+            obs = np.concatenate([obs, clock])
+        if self._heading_obs:
+            err = self.yaw_error()
+            obs = np.concatenate([obs, np.array([np.sin(err), np.cos(err)], dtype=np.float32)])
+        if self._vel_cmd is not None:
+            obs = np.concatenate([obs, np.array([self.vx_cmd * VX_CMD_OBS_SCALE], dtype=np.float32)])
+        return obs
 
     def action_to_target(self, raw: np.ndarray, prev_target: np.ndarray | None = None) -> np.ndarray:
         """stand + scale × clip(raw), rate-limited against prev_target (if a limit is set), clamped to ctrlrange."""
@@ -158,6 +261,7 @@ class QuadrupedEnvObstacle(QuadrupedEnvGait):
     def _sample_reset_qpos(self) -> np.ndarray:
         qpos = super()._sample_reset_qpos()  # stand keyframe + small joint/height noise
         qpos[0] = self.rng.uniform(*self.cfg["spawn_x_range"])
+        self._start_yaw = float(yaw_of(torch.tensor(qpos[3:7])))  # before super().reset() builds the first obs
         return qpos
 
     def _make_sim_state(self, action: np.ndarray, prev_action: np.ndarray) -> ObstacleSimState:
@@ -170,6 +274,12 @@ class QuadrupedEnvObstacle(QuadrupedEnvGait):
             prev_raw_action=torch.tensor(self._prev_raw, dtype=f32),
             joint_vel=torch.tensor(self.data.qvel[6:].copy(), dtype=f32),
             foot_phase=torch.tensor(self.foot_phase() if self._clock_step else np.zeros(4), dtype=f32),
+            yaw_error=torch.tensor(self.yaw_error(), dtype=f32),
+            body_contact=body_contact_count(
+                torch.tensor(self.data.geom_xpos[self._body_geoms], dtype=f32),
+                torch.tensor(self.data.geom_xmat[self._body_geoms].reshape(-1, 3, 3), dtype=f32),
+                self._body_half,
+            ),
         )
 
     def _compute_reward(self, state: ObstacleSimState):

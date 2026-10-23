@@ -9,6 +9,10 @@ Usage (from the project root):
     source .venv/bin/activate
     python train/train_obstacle.py --task train/tasks/walk_obstacle.yaml --num_envs 2048 --iterations 3000 --save_interval 25 --run_name walk_obstacle
 
+To continue from a finished run's weights (only when the observation size is the same), add
+    --resume train/logs/walk_obstacle_speed/model_2999.pt
+The iteration count restarts at 0, so the new run saves model_0 ... model_<iterations-1>.
+
 Checkpoints and TensorBoard logs are saved to train/logs/<run_name>/.
 To view:
     tensorboard --logdir train/logs --bind_all
@@ -38,6 +42,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--run_name", default=None)
+    parser.add_argument("--resume", default=None, help="checkpoint to start from, e.g. train/logs/walk_obstacle_speed/model_2999.pt")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -52,6 +57,10 @@ def main() -> None:
 
     train_cfg = build_train_cfg(args.num_steps_per_env, args.save_interval)
     runner = OnPolicyRunner(env, train_cfg, log_dir=log_dir, device=args.device)
+    if args.resume:
+        runner.load(args.resume, map_location=args.device)  # weights + optimizer state
+        runner.current_learning_iteration = 0  # number this run's checkpoints from 0
+        print(f"Resumed from {args.resume}")
 
     print(f"Task: {cfg['task']}  |  envs: {args.num_envs}  |  action scale: {cfg['action_scale']}  |  logs: {log_dir}")
     runner.learn(num_learning_iterations=args.iterations)

@@ -1,0 +1,138 @@
+# Stage 3 task (stable version): walk_obstacle_speed.yaml + less body rocking.
+# Played back, walk_obstacle_speed model_2400 followed the speed command but waddled: body roll
+# swung 28-40 deg peak to peak and pitch 21-28 deg, sideways speed (0.09-0.11 m/s rms) was larger
+# than the forward speed, and it stood on two diagonal feet 88-97 % of the time, rocking around
+# that diagonal. Almost nothing punished it: upright = cos(tilt) costs 0.03 at 15 deg,
+# ang_vel_penalty was not used, and lateral_penalty 0.3 x 0.1 m/s = 0.03.
+# Changes from walk_obstacle_speed.yaml (same 35 inputs, so it can start from its weights:
+# train_obstacle.py --resume train/logs/walk_obstacle_speed/model_2999.pt):
+#   - orientation_penalty 5.0 (new): sin²(tilt); 15 deg -> -0.33 per step
+#   - ang_vel_penalty 0.05 (was not used): gyro² summed; 1.3 rad/s on roll and pitch -> -0.17
+#   - lateral_penalty 0.3 -> 1.0
+#   - gait_clock duty 0.5 -> 0.6: all four feet down for 2 x 10 % of each cycle
+#
+# --- walk_obstacle_speed.yaml description ---
+# Stage 3 task (speed command version): walk_obstacle_heading.yaml + a forward speed command.
+# The heading version learns one fixed speed (target_vx 0.08 m/s at a 2 Hz gait clock) and has no
+# way to go slower. Here every env gets its own command vx_cmd, drawn from velocity_command.range at
+# reset and again every resample_s, and the policy sees it (35 inputs instead of 34). The gait clock
+# frequency follows the command (1.0 Hz at 0.02 m/s ... 2.0 Hz at 0.08 m/s), so slow commands get
+# slower steps of a similar length instead of tiny fast ones, which could not clear the bars.
+# Changes from walk_obstacle_heading.yaml:
+#   - velocity_command block; target_vx is only the value before the first draw
+#   - gait_clock.frequency_hz 2.0 -> [1.0, 2.0]
+#   - velocity_scale 0.05 -> 0.02: at 0.05 a policy 0.04 m/s off still got 53 % of velocity_track,
+#     so it could ignore the command and walk at one comfortable speed (now 2 %)
+#   - velocity_track 1.5 -> 2.0
+#   - feet_air_time unchanged: per landing it grows with the swing time (1/f), but landings per
+#     second grow with f, so per second it is the same at every clock frequency
+# Play: starts at velocity_command.play (0.04 m/s, half the old speed); Up/Down arrows change it live.
+# run_policy.py (real robot) must append vx_cmd x 10 (VX_CMD_OBS_SCALE) after the heading error.
+#
+# --- walk_obstacle_heading.yaml description ---
+# Stage 3 task (heading version): walk_obstacle_clock.yaml + start heading + no kneeling.
+# Played back, the walk_obstacle_clock policy (model_2999) walked on its knees and turned off course:
+#   - the knee servo boxes (*_thigh_collision_1) were on the floor 30-60 % of the time, hips stuck
+#     at their +20 deg limit, body at 0.098 m instead of 0.1196 m. Nothing punished it: foot_contact
+#     only looks at the feet, height_scale 0.04 still paid 74 % of the height reward at 0.098 m,
+#     and fall_height 0.05 never ended the episode.
+#   - yaw went to +90..+120 deg in 10 s and it covered only 0.13 m. yaw_penalty only punishes
+#     turning speed, and the policy could not see how far it had already turned.
+# Changes:
+#   - heading block: yaw error from the start heading in the observation (34 inputs instead of 32)
+#     + heading_track reward. Real robot: BNO085 game rotation vector, yaw minus the yaw at start.
+#   - body_contact_penalty: per non-foot collision geom on the floor.
+#   - height_scale 0.04 -> 0.015 (0.098 m now pays 13 %), fall_height 0.05 -> 0.08.
+# run_policy.py (real robot) must append [sin, cos] of the yaw error after the clock, like env_obstacle.py.
+#
+# Stage 3 task (gait clock version): walk_obstacle_smooth.yaml + a gait rhythm.
+# The policy also sees a clock [sin 2πφ, cos 2πφ] (32 inputs instead of 30), and two
+# rewards tie the feet to it: trot (FL+BR, then FR+BL), each foot on the ground for half
+# of the 0.5 s cycle and lifted along a smooth arc for the other half. Without a rhythm,
+# the earlier policies found irregular, shuffling steps. The clock is not a sensor: the
+# real robot runs the same clock on the PC (run_policy.py).
+#
+# Stage 3 task (smooth version): walk_obstacle.yaml + a command rate limit and smoothness
+# penalties. The first walk_obstacle run shook at 25 Hz: joint commands changed up to
+# 80 deg per 20 ms (44 rad/s), far faster than a MG90S (~10 rad/s no-load) or the
+# servo bridge limit (4 rad/s, README). walk_obstacle.yaml stays as it was, so its
+# checkpoints still play the same way.
+#
+# Original description:
+# Stage 3 task: walk forward over ~1 cm bars (no camera: the bars cannot be seen)
+# Uses scene_obstacle.xml (bars 8-12 mm high, every 25 cm) through env_obstacle.py /
+# vec_env_obstacle.py. Starts from walk_forward_gait.yaml and adds feet_clearance.
+# The robot is blind, so the way over is to lift every swing foot higher than the bars.
+
+task: walk_obstacle_stable
+
+episode_length_s: 10.0        # 0.02-0.08 m/s x 10 s = 0.2-0.8 m -> 0-3 bars per episode
+
+target_height: 0.1196
+height_scale: 0.015         # walk_obstacle_clock: 0.04 (kneeling at 0.098 m still paid 74 %)
+
+target_vx: 0.04              # only before the first command draw
+velocity_scale: 0.02         # walk_obstacle_heading: 0.05
+
+velocity_command:
+  range: [0.02, 0.08]        # m/s, vx_cmd drawn uniformly per env at reset and every resample_s
+  resample_s: 5.0            # one speed change in the middle of each 10 s episode
+  play: 0.04                 # m/s, starting command in play_obstacle.py (--vx overrides)
+
+fall_height: 0.08           # walk_obstacle_clock: 0.05 (never reached while kneeling)
+fall_upright: 0.6
+
+# Obstacle / action settings (env_obstacle.py)
+target_clearance: 0.02        # m, swing foot bottom this high = full feet_clearance (bars are <= 12 mm)
+spawn_x_range: [-0.2, 0.0]    # m, random start, first bar at x = 0.12
+action_scale:                 # rad per unit action, offset from the stand pose
+  roll: 0.15                  # ~9 deg  (roll range is only 24 deg)
+  hip: 0.3                    # ~17 deg
+  knee: 0.3                   # ~17 deg
+action_clip: 3.0              # |raw action| limit, about the full joint range at these scales
+max_command_rate: 6.0         # rad/s: a joint target moves at most 6 x 0.02 = 0.12 rad (6.9 deg) per step.
+                              # Raised from 4.0 (servo bridge limit in README) to allow quicker steps over the
+                              # bars; MG90S no-load speed is ~10 rad/s. run_policy.py must use the same value.
+
+heading:                      # yaw error from the start heading (+x, across the bars) -> observation + heading_track
+  scale: 0.25                 # rad, error where heading_track drops to 1/e (~14 deg)
+  noise_std: 0.01             # rad, white noise on the observed yaw
+  drift_max: 0.002            # rad/s, per-episode drift of the observed yaw (game rotation vector has no magnetometer)
+
+gait_clock:
+  frequency_hz: [1.0, 2.0]    # Hz at velocity_command.range ends, linear in between (heading: 2.0)
+                              # 0.02 m/s -> 1.0 Hz, 0.04 -> 1.33 Hz, 0.08 -> 2.0 Hz: 2-4 cm per cycle
+  duty: 0.6                   # each foot on the ground 60 % of the cycle: trot with 4-foot overlap (speed: 0.5)
+  offsets:                    # where each foot is in the cycle; 0 and 0.5 = diagonal pairs alternate
+    fl: 0.0
+    fr: 0.5
+    bl: 0.5
+    br: 0.0
+
+reward_weights:
+  upright: 1.0
+  height: 0.5
+  velocity_track: 2.0         # heading: 1.5, walk_forward_gait: 1.0; stuck at a bar loses most of it
+  lateral_penalty: 1.0         # speed: 0.3
+  yaw_penalty: 0.2
+  ang_vel_penalty: 0.05       # new here: gyro² (roll/pitch/yaw rate) against rocking
+  orientation_penalty: 5.0    # new: sin²(tilt), 15 deg -> -0.33
+  action_rate_penalty: 0.01
+  torque_penalty: 0.001
+  alive: 0.3
+  feet_air_time: 8.0
+  gait_symmetry: 0.3
+  feet_clearance: 0.5         # lift swing feet up to target_clearance
+  raw_action_rate_penalty: 0.02   # network output jumping between steps (before the rate limit)
+  joint_vel_penalty: 0.0005       # (rad/s)^2 summed over 12 joints; 2 rad/s everywhere = -0.024
+  gait_phase_contact: 1.0         # feet on the ground / in the air when the clock says so (0..1)
+  gait_phase_swing_height: 1.0    # swing foot follows 0 -> target_clearance -> 0 (0..1)
+  heading_track: 1.0              # keep the start heading (0..1)
+  body_contact_penalty: 1.0       # per knee/shin/shoulder/body geom on the floor
+
+# imu_noise: defaults from vec_env_imu.py (uncomment to override)
+#   gyro_noise_std: 0.005
+#   accel_noise_std: 0.05
+#   gyro_bias_max: 0.01
+#   accel_bias_max: 0.1
+#   max_latency_steps: 1

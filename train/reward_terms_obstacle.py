@@ -19,6 +19,18 @@ reward_terms_gait.py in a new file without touching it.
       stance and in the air in swing; the second rewards a swing foot for following a
       smooth lift-and-lower height curve (0 -> target_clearance -> 0). The clock phase is
       also in the observation, so the policy can time its steps to it.
+    - heading_track: only with a `heading` block in the task yaml. Rewards keeping the
+      start heading (+x, across the bars). yaw_penalty only punishes turning *speed*, so a
+      policy that had already turned had no reason to turn back; the walk_obstacle_clock
+      policy ended 90-120 deg off course after 10 s. The heading error is also in the
+      observation (BNO085 game rotation vector on the real robot), so the policy can see it.
+    - body_contact_penalty: number of non-foot collision geoms (knee servo boxes, shins,
+      shoulders, body) touching the floor. The walk_obstacle_clock policy walked on its
+      knees: the knee servo boxes (*_thigh_collision_1) were on the floor 30-60 % of the
+      time, which nothing punished.
+    - orientation_penalty: sin² of the body tilt (= roll² + pitch² for small angles). upright
+      (reward_terms.py) is cos(tilt), which is flat near upright: 15 deg costs only 0.03, so the
+      walk_obstacle_speed policy rocked ±15-20 deg around the diagonal support line of the trot.
 
 Like the foot contacts, foot heights and joint speeds are privileged sim values used only for the
 reward, never in the observation, so the real robot needs no extra sensors.
@@ -45,6 +57,8 @@ class ObstacleSimState(GaitSimState):
     prev_raw_action: torch.Tensor  # (..., 12) network output previous step
     joint_vel: torch.Tensor        # (..., 12) joint speeds, rad/s
     foot_phase: torch.Tensor       # (..., 4) gait clock phase of each foot in [0, 1) (zeros without a clock)
+    yaw_error: torch.Tensor        # (...,) body yaw minus start heading, rad in (-π, π]
+    body_contact: torch.Tensor     # (...,) number of non-foot collision geoms touching the floor
 
 
 def reward_feet_clearance(state: ObstacleSimState, ctx) -> torch.Tensor:
@@ -84,6 +98,21 @@ def reward_gait_phase_swing_height(state: ObstacleSimState, ctx) -> torch.Tensor
     return (track * swing).sum(-1) / swing.sum(-1).clamp(min=1.0)
 
 
+def reward_heading_track(state: ObstacleSimState, ctx) -> torch.Tensor:
+    """Approaches 1.0 the closer the body yaw is to the start heading."""
+    return torch.exp(-((state.yaw_error / ctx.heading_scale) ** 2))
+
+
+def penalty_orientation(state: ObstacleSimState, ctx) -> torch.Tensor:
+    """Penalty for body tilt: sin²(tilt) = 1 - up_z² (roll² + pitch² for small angles, rad²)."""
+    return -(1.0 - state.up_z ** 2)
+
+
+def penalty_body_contact(state: ObstacleSimState, ctx) -> torch.Tensor:
+    """Penalty per non-foot collision geom on the floor (knees, shins, shoulders, body)."""
+    return -state.body_contact
+
+
 REGISTRY_OBSTACLE = dict(REGISTRY_GAIT)
 REGISTRY_OBSTACLE.update(
     {
@@ -92,5 +121,8 @@ REGISTRY_OBSTACLE.update(
         "joint_vel_penalty": penalty_joint_vel,
         "gait_phase_contact": reward_gait_phase_contact,
         "gait_phase_swing_height": reward_gait_phase_swing_height,
+        "heading_track": reward_heading_track,
+        "body_contact_penalty": penalty_body_contact,
+        "orientation_penalty": penalty_orientation,
     }
 )
