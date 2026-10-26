@@ -12,6 +12,9 @@ command can be changed live: Up / Down arrow keys in the viewer window = ±0.01 
 velocity_command.range. It starts at --vx (default: velocity_command.play) and is shown in the
 top-left corner of the viewer.
 
+An episode ends after the task's episode_length_s (10 s), or when the robot falls. --seconds
+changes that for playback only (0 = no time limit, reset only on a fall); training is unchanged.
+
 Usage (from the project root):
     source .venv/bin/activate
     python train/play_obstacle.py --checkpoint train/logs/walk_obstacle/model_<N>.pt
@@ -78,10 +81,14 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True, help="e.g. train/logs/walk_obstacle/model_3000.pt")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--seconds", type=float, default=None,
+                        help="episode length for playback, s (default: the task's episode_length_s; 0 = until it falls)")
     parser.add_argument("--vx", type=float, default=None, help="starting speed command, m/s (velocity_command tasks only)")
     args = parser.parse_args()
 
     cfg = load_task_config(args.task)
+    if args.seconds is not None:
+        cfg["episode_length_s"] = args.seconds if args.seconds > 0 else 1e9
     env = QuadrupedEnvObstacle(cfg, seed=args.seed)
     vel_cmd = cfg["velocity_command"]
     if vel_cmd is not None and args.vx is not None:
